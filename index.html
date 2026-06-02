@@ -70,23 +70,29 @@
             </div>
         </div>
 
-        <!-- ============ AUTH SCREEN ============ -->
-        <div id="screen-auth" class="screen" style="display:none;">
-            <div class="auth-container">
-                <div class="auth-card">
-                    <div class="auth-logo">
-                        <img src="assets/app-icon.png" alt="ServiConnect" width="60" height="60" style="border-radius:14px;">
-                    </div>
-                    <h2>Welcome to ServiConnect</h2>
-                    <p class="auth-subtitle">Sign in to continue</p>
-                    <button class="btn-google" onclick="signInWithGoogle()">
-                        <i class="fab fa-google"></i>
-                        Continue with Google
-                    </button>
-                    <p class="auth-terms">By continuing, you agree to our Terms of Service and Privacy Policy</p>
-                </div>
+        <!-- ============ AUTH SCREEN (FIXED) ============ -->
+<div id="screen-auth" class="screen" style="display:none;">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <img src="assets/app-icon.png" alt="ServiConnect" width="60" height="60" style="border-radius:14px;">
             </div>
+            <h2>Welcome to ServiConnect</h2>
+            <p class="auth-subtitle">Sign in to continue</p>
+            
+            <!-- FIXED: Added type="button" and proper onclick -->
+            <button type="button" class="btn-google" id="google-signin-btn" onclick="signInWithGoogle()">
+                <i class="fab fa-google"></i>
+                Continue with Google
+            </button>
+            
+            <p class="auth-terms">By continuing, you agree to our Terms of Service and Privacy Policy</p>
+            
+            <!-- Debug info (remove in production) -->
+            <p id="auth-debug" style="font-size:10px; color:#ccc; margin-top:12px;"></p>
         </div>
+    </div>
+</div>
 
         <!-- ============ HOME SCREEN ============ -->
         <div id="screen-home" class="screen" style="display:none;">
