@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" href="app-icon.png">
+    <link rel="apple-touch-icon" href="app-icon.png">
+    <title>Shoplify Enterprise</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+</head>
+<body>
+
+<div id="app">
+
+    <!-- ==================== ONBOARDING SCREEN ==================== -->
+    <div id="screen-onboarding" class="screen">
+        <div class="onboarding-container">
+            <div class="onboarding-logo">
+                <img src="app-icon.png" alt="Shoplify" class="app-logo-large">
+            </div>
+            <h1 class="onboarding-title">Shoplify Enterprise</h1>
+            <p class="onboarding-subtitle">The Ultimate Commerce Ecosystem</p>
+            <div class="onboarding-features">
+                <div class="feature-item"><span>🛍️</span> Shop Globally</div>
+                <div class="feature-item"><span>💰</span> Earn Commissions</div>
+                <div class="feature-item"><span>📦</span> Dropship Easily</div>
+                <div class="feature-item"><span>🛡️</span> Escrow Protected</div>
+            </div>
+            <button class="btn-gold btn-large" onclick="navigateTo('auth')">Get Started</button>
+            <p class="powered-by">Powered by Rev</p>
+        </div>
+    </div>
+
+    <!-- ==================== AUTH SCREEN ==================== -->
+    <div id="screen-auth" class="screen hidden">
+        <div class="auth-container">
+            <div class="auth-header">
+                <img src="app-icon.png" alt="Shoplify" class="auth-logo">
+                <h2>Welcome Back</h2>
+                <p>Sign in to continue</p>
+            </div>
+            <div class="auth-methods">
+                <button class="btn-google" onclick="signInWithGoogle()">
+                    <span class="google-icon">G</span> Continue with Google
+                </button>
+                <div class="divider"><span>or</span></div>
+                <div class="auth-form">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="auth-username" placeholder="Enter username" class="input-field" autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="auth-password" placeholder="Enter password" class="input-field" autocomplete="current-password">
+                    </div>
+                    <button class="btn-gold btn-full" onclick="signInWithCredentials()">Sign In</button>
+                </div>
+                <p class="auth-switch">Don't have an account? <span class="link-text" onclick="navigateTo('account-type')">Create Account</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ACCOUNT TYPE SCREEN ==================== -->
+    <div id="screen-account-type" class="screen hidden">
+        <div class="setup-container">
+            <h2>Choose Your Path</h2>
+            <p>Select your account type to get started</p>
+            <div class="account-types-grid">
+                <div class="account-type-card" onclick="selectAccountType('customer')">
+                    <div class="type-icon">🛒</div>
+                    <h3>Customer</h3>
+                    <p>Shop products, track orders, write reviews</p>
+                    <span class="type-badge free">Free</span>
+                </div>
+                <div class="account-type-card" onclick="selectAccountType('affiliate')">
+                    <div class="type-icon">📢</div>
+                    <h3>Affiliate</h3>
+                    <p>Promote products, earn 4-5% commission</p>
+                    <span class="type-badge paid">$3/month</span>
+                </div>
+                <div class="account-type-card" onclick="selectAccountType('merchant')">
+                    <div class="type-icon">🏪</div>
+                    <h3>Merchant</h3>
+                    <p>Sell products globally, manage store</p>
+                    <span class="type-badge paid">$2 lifetime</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SETUP CREDENTIALS SCREEN ==================== -->
+    <div id="screen-setup-credentials" class="screen hidden">
+        <div class="setup-container">
+            <h2>Create Your Account</h2>
+            <div class="input-group">
+                <label>Choose Username</label>
+                <input type="text" id="setup-username" placeholder="Lowercase, no spaces" class="input-field">
+                <small>3-30 characters, lowercase letters and numbers only</small>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="setup-password" placeholder="Min 6 characters" class="input-field">
+            </div>
+            <div class="input-group">
+                <label>Country</label>
+                <select id="setup-country" class="input-field" onchange="updateCountryCode()">
+                    <option value="">Select Country</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Phone Number</label>
+                <div class="phone-input-wrapper">
+                    <span class="country-code-display" id="country-code-display">+1</span>
+                    <input type="tel" id="setup-phone" placeholder="Phone number" class="input-field phone-input">
+                </div>
+            </div>
+            <button class="btn-gold btn-full" onclick="completeSetup()">Create Account</button>
+        </div>
+    </div>
+
+    <!-- ==================== HOME SCREEN ==================== -->
+    <div id="screen-home" class="screen hidden">
+        <div class="top-banner live-feed" id="live-feed-banner">
+            <div class="live-feed-content" id="live-feed-content">
+                <span class="live-dot"></span> Live Feed Loading...
+            </div>
+        </div>
+        <div class="home-header">
+            <div class="header-left">
+                <img src="app-icon.png" alt="Shoplify" class="header-icon">
+                <span class="header-title">Shoplify</span>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="navigateTo('notifications')" style="position:relative;">
+                    🔔
+                    <span class="badge" id="notification-badge" style="display:none">0</span>
+                </button>
+                <button class="icon-btn" id="cart-header-btn" onclick="navigateTo('checkout')" style="position:relative;">
+                    🛒
+                    <span id="cart-count-badge" style="position:absolute;top:-5px;right:-5px;background:#FF4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700;">0</span>
+                </button>
+                <button class="icon-btn" onclick="navigateTo('wallet')">💰</button>
+                <button class="icon-btn" onclick="navigateTo('profile')">
+                    <img src="app-icon.png" alt="Profile" class="avatar-small" id="header-avatar">
+                </button>
+            </div>
+        </div>
+        <div class="home-content">
+            <div class="wallet-card">
+                <div class="wallet-balance">
+                    <small>Available Balance</small>
+                    <h2 id="home-balance">$0.00</h2>
+                </div>
+                <div class="wallet-actions">
+                    <button class="btn-outline" onclick="navigateTo('wallet')">Deposit</button>
+                    <button class="btn-outline" onclick="navigateTo('wallet')">Withdraw</button>
+                </div>
+            </div>
+            <div class="ad-banner" id="ad-banner">
+                <button class="ad-close" onclick="closeAd()">×</button>
+                <div class="ad-content" id="ad-content"></div>
+            </div>
+            <div class="section-header">
+                <h3>Sponsored Products</h3>
+                <span class="see-more" onclick="navigateTo('sponsored')">See More →</span>
+            </div>
+            <div class="products-scroll" id="sponsored-products"></div>
+            <div class="section-header" id="top-earners-header" style="display:none;">
+                <h3>Top Earners Today</h3>
+            </div>
+            <div class="top-earners" id="top-earners"></div>
+            <div class="section-header">
+                <h3>Trending Products</h3>
+            </div>
+            <div class="products-grid" id="trending-products"></div>
+        </div>
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="navigateTo('home')"><span>🏠</span>Home</button>
+            <button class="nav-item" onclick="navigateTo('marketplace')"><span>🛍️</span>Shop</button>
+            <button class="nav-item" id="nav-affiliate" onclick="navigateTo('affiliate')" style="display:none;"><span>📢</span>Affiliate</button>
+            <button class="nav-item" id="nav-merchant" onclick="navigateTo('merchant')" style="display:none;"><span>🏪</span>Store</button>
+            <button class="nav-item" onclick="navigateTo('orders')"><span>📦</span>Orders</button>
+        </nav>
+    </div>
+
+    <!-- ==================== MARKETPLACE SCREEN ==================== -->
+    <div id="screen-marketplace" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Marketplace</h2>
+            <button class="icon-btn" onclick="navigateTo('checkout')" style="position:relative;margin-left:auto;">
+                🛒
+                <span id="cart-count-badge-mp" style="position:absolute;top:-5px;right:-5px;background:#FF4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700;">0</span>
+            </button>
+        </div>
+        <div class="marketplace-content">
+            <div class="search-bar">
+                <input type="text" id="product-search" placeholder="Search products..." class="input-field" oninput="searchProducts()">
+            </div>
+            <div class="category-filters" id="category-filters"></div>
+            <div class="products-grid-full" id="all-products"></div>
+        </div>
+    </div>
+
+    <!-- ==================== PRODUCT DETAIL SCREEN ==================== -->
+    <div id="screen-product-detail" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <h2>Product Details</h2>
+            <button class="icon-btn" onclick="navigateTo('checkout')" style="position:relative;margin-left:auto;">
+                🛒
+                <span id="cart-count-badge-pd" style="position:absolute;top:-5px;right:-5px;background:#FF4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700;">0</span>
+            </button>
+        </div>
+        <div class="product-detail-content" id="product-detail-content"></div>
+    </div>
+
+    <!-- ==================== SPONSORED PRODUCTS SCREEN ==================== -->
+    <div id="screen-sponsored" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Sponsored Products</h2>
+        </div>
+        <div class="sponsored-grid" id="sponsored-grid"></div>
+    </div>
+
+    <!-- ==================== CHECKOUT SCREEN ==================== -->
+    <div id="screen-checkout" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <h2>Checkout</h2>
+        </div>
+        <div class="checkout-content" id="checkout-content"></div>
+    </div>
+
+    <!-- ==================== ORDERS SCREEN ==================== -->
+    <div id="screen-orders" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>My Orders</h2>
+        </div>
+        <div class="orders-list" id="orders-list"></div>
+    </div>
+
+    <!-- ==================== WALLET SCREEN ==================== -->
+    <div id="screen-wallet" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Wallet</h2>
+        </div>
+        <div class="wallet-content">
+            <div class="balance-display">
+                <small>Total Balance</small>
+                <h1 id="wallet-total-balance">$0.00</h1>
+                <div class="balance-breakdown">
+                    <div class="balance-item"><small>Available</small><span id="wallet-available">$0.00</span></div>
+                    <div class="balance-item"><small>Pending</small><span id="wallet-pending">$0.00</span></div>
+                    <div class="balance-item"><small>Escrow</small><span id="wallet-escrow">$0.00</span></div>
+                </div>
+            </div>
+            <div class="wallet-buttons">
+                <button class="btn-gold btn-full" onclick="showDepositModal()">Deposit</button>
+                <button class="btn-outline btn-full" onclick="showWithdrawInfo()">Withdraw via Shoplify Wallet</button>
+            </div>
+            <div class="transactions-history" id="transactions-history"></div>
+        </div>
+    </div>
+
+    <!-- ==================== AFFILIATE DASHBOARD SCREEN ==================== -->
+    <div id="screen-affiliate" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Affiliate Dashboard</h2>
+        </div>
+        <div class="affiliate-content" id="affiliate-content"></div>
+    </div>
+
+    <!-- ==================== ADVERTISERS SCREEN ==================== -->
+    <div id="screen-advertisers" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('affiliate')">←</button>
+            <h2>Advertisers</h2>
+        </div>
+        <div class="advertisers-list" id="advertisers-list"></div>
+    </div>
+
+    <!-- ==================== AFFILIATE INSTALL SCREEN ==================== -->
+    <div id="screen-affiliate-install" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('affiliate')">←</button>
+            <h2>Install Products</h2>
+        </div>
+        <div class="install-products" id="install-products"></div>
+    </div>
+
+    <!-- ==================== MERCHANT DASHBOARD SCREEN ==================== -->
+    <div id="screen-merchant" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Merchant Dashboard</h2>
+        </div>
+        <div class="merchant-content" id="merchant-content"></div>
+    </div>
+
+    <!-- ==================== STORE SETUP SCREEN ==================== -->
+    <div id="screen-store-setup" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('merchant')">←</button>
+            <h2>Store Setup</h2>
+        </div>
+        <div class="store-setup-content" id="store-setup-content"></div>
+    </div>
+
+    <!-- ==================== ADD PRODUCT SCREEN ==================== -->
+    <div id="screen-add-product" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('merchant')">←</button>
+            <h2>Add Product</h2>
+        </div>
+        <div class="add-product-form" id="add-product-form"></div>
+    </div>
+
+    <!-- ==================== DROPSHIP DASHBOARD SCREEN ==================== -->
+    <div id="screen-dropship" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Dropship Dashboard</h2>
+        </div>
+        <div class="dropship-content" id="dropship-content"></div>
+    </div>
+
+    <!-- ==================== DROPSHIP STORE SCREEN ==================== -->
+    <div id="screen-dropship-store" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('dropship')">←</button>
+            <h2>My Store</h2>
+        </div>
+        <div class="dropship-store-content" id="dropship-store-content"></div>
+    </div>
+
+    <!-- ==================== PROFILE SCREEN ==================== -->
+    <div id="screen-profile" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Profile</h2>
+        </div>
+        <div class="profile-content" id="profile-content"></div>
+    </div>
+
+    <!-- ==================== SETTINGS SCREEN ==================== -->
+    <div id="screen-settings" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('profile')">←</button>
+            <h2>Settings</h2>
+        </div>
+        <div class="settings-content" id="settings-content"></div>
+    </div>
+
+    <!-- ==================== NOTIFICATIONS SCREEN ==================== -->
+    <div id="screen-notifications" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Notifications</h2>
+        </div>
+        <div class="notifications-list" id="notifications-list"></div>
+    </div>
+
+    <!-- ==================== TRANSACTIONS SCREEN ==================== -->
+    <div id="screen-transactions" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('wallet')">←</button>
+            <h2>Transactions</h2>
+        </div>
+        <div class="transactions-full" id="transactions-full"></div>
+    </div>
+
+    <!-- ==================== LEADERBOARD SCREEN ==================== -->
+    <div id="screen-leaderboard" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Leaderboard</h2>
+        </div>
+        <div class="leaderboard-content" id="leaderboard-content"></div>
+    </div>
+
+    <!-- ==================== ANALYTICS SCREEN ==================== -->
+    <div id="screen-analytics" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('affiliate')">←</button>
+            <h2>Analytics</h2>
+        </div>
+        <div class="analytics-content" id="analytics-content"></div>
+    </div>
+
+    <!-- ==================== CUSTOMER SERVICE SCREEN ==================== -->
+    <div id="screen-customerservice" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Customer Service</h2>
+        </div>
+        <div class="cs-content" id="cs-content"></div>
+    </div>
+
+    <!-- ==================== DISPUTES SCREEN ==================== -->
+    <div id="screen-disputes-manage" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('customerservice')">←</button>
+            <h2>Dispute Management</h2>
+        </div>
+        <div class="disputes-content" id="disputes-content"></div>
+    </div>
+
+    <!-- ==================== VIP SCREEN ==================== -->
+    <div id="screen-vip" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>VIP Program</h2>
+        </div>
+        <div class="vip-content" id="vip-content"></div>
+    </div>
+
+    <!-- ==================== HALL OF FAME SCREEN ==================== -->
+    <div id="screen-hall-of-fame" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Hall of Fame</h2>
+        </div>
+        <div class="hall-fame-content" id="hall-fame-content"></div>
+    </div>
+
+    <!-- ==================== FLASH CAMPAIGNS SCREEN ==================== -->
+    <div id="screen-flash-campaigns" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('home')">←</button>
+            <h2>Flash Campaigns</h2>
+        </div>
+        <div class="flash-content" id="flash-content"></div>
+    </div>
+
+    <!-- ==================== LOADER ==================== -->
+    <div id="loader-overlay" class="hidden">
+        <div class="loader-spinner"></div>
+        <p>Loading Shoplify...</p>
+    </div>
+
+    <!-- ==================== TOAST ==================== -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- ==================== MODAL ==================== -->
+    <div id="modal-overlay" class="modal-overlay hidden"></div>
+
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="countries.js"></script>
+<script src="config.js"></script>
+<script src="firebase.js"></script>
+<script src="utils.js"></script>
+<script src="auth.js"></script>
+<script src="router.js"></script>
+<script src="notifications.js"></script>
+<script src="home.js"></script>
+<script src="products.js"></script>
+<script src="income.js"></script>
+<script src="wallet.js"></script>
+<script src="orders.js"></script>
+<script src="profile.js"></script>
+<script src="dropship.js"></script>
+<script src="customerservice.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
