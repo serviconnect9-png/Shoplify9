@@ -6,10 +6,10 @@
     <meta name="theme-color" content="#FFD700">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" href="app-icon.png">
-    <link rel="apple-touch-icon" href="app-icon.png">
-    <title>Shoplify Enterprise</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="/app-icon.png">
+    <link rel="apple-touch-icon" href="/app-icon.png">
+    <title>ONESHOPLIFY Enterprise</title>
+    <link rel="stylesheet" href="/style.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -23,9 +23,9 @@
     <div id="screen-onboarding" class="screen">
         <div class="onboarding-container">
             <div class="onboarding-logo">
-                <img src="app-icon.png" alt="Shoplify" class="app-logo-large">
+                <img src="/app-icon.png" alt="ONESHOPLIFY" class="app-logo-large">
             </div>
-            <h1 class="onboarding-title">Shoplify Enterprise</h1>
+            <h1 class="onboarding-title">ONESHOPLIFY Enterprise</h1>
             <p class="onboarding-subtitle">The Ultimate Commerce Ecosystem</p>
             <div class="onboarding-features">
                 <div class="feature-item"><span>🛍️</span> Shop Globally</div>
@@ -42,7 +42,7 @@
     <div id="screen-auth" class="screen hidden">
         <div class="auth-container">
             <div class="auth-header">
-                <img src="app-icon.png" alt="Shoplify" class="auth-logo">
+                <img src="/app-icon.png" alt="ONESHOPLIFY" class="auth-logo">
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue</p>
             </div>
@@ -134,8 +134,8 @@
         </div>
         <div class="home-header">
             <div class="header-left">
-                <img src="app-icon.png" alt="Shoplify" class="header-icon">
-                <span class="header-title">Shoplify</span>
+                <img src="/app-icon.png" alt="ONESHOPLIFY" class="header-icon">
+                <span class="header-title">ONESHOPLIFY</span>
             </div>
             <div class="header-right">
                 <button class="icon-btn" onclick="navigateTo('notifications')" style="position:relative;">
@@ -148,7 +148,7 @@
                 </button>
                 <button class="icon-btn" onclick="navigateTo('wallet')">💰</button>
                 <button class="icon-btn" onclick="navigateTo('profile')">
-                    <img src="app-icon.png" alt="Profile" class="avatar-small" id="header-avatar">
+                    <img src="/app-icon.png" alt="Profile" class="avatar-small" id="header-avatar">
                 </button>
             </div>
         </div>
@@ -444,10 +444,28 @@
         <div class="flash-content" id="flash-content"></div>
     </div>
 
+    <!-- ==================== INFLUENCER APPLICATION SCREEN ==================== -->
+    <div id="screen-influencer-apply" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('profile')">←</button>
+            <h2>Influencer Application</h2>
+        </div>
+        <div class="influencer-apply-content" id="influencer-apply-content"></div>
+    </div>
+
+    <!-- ==================== RECRUIT AFFILIATES SCREEN ==================== -->
+    <div id="screen-recruit-affiliates" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('dropship')">←</button>
+            <h2>Recruit Affiliates</h2>
+        </div>
+        <div class="recruit-affiliates-content" id="recruit-affiliates-content"></div>
+    </div>
+
     <!-- ==================== LOADER ==================== -->
     <div id="loader-overlay" class="hidden">
         <div class="loader-spinner"></div>
-        <p>Loading Shoplify...</p>
+        <p>Loading ONESHOPLIFY...</p>
     </div>
 
     <!-- ==================== TOAST ==================== -->
@@ -458,23 +476,23 @@
 
 </div>
 
-<!-- ==================== SCRIPTS ==================== -->
-<script src="countries.js"></script>
-<script src="config.js"></script>
-<script src="firebase.js"></script>
-<script src="utils.js"></script>
-<script src="auth.js"></script>
-<script src="router.js"></script>
-<script src="notifications.js"></script>
-<script src="home.js"></script>
-<script src="products.js"></script>
-<script src="income.js"></script>
-<script src="wallet.js"></script>
-<script src="orders.js"></script>
-<script src="profile.js"></script>
-<script src="dropship.js"></script>
-<script src="customerservice.js"></script>
-<script src="app.js"></script>
+<!-- ==================== SCRIPTS (Root-relative paths for Vercel) ==================== -->
+<script src="/countries.js"></script>
+<script src="/config.js"></script>
+<script src="/firebase.js"></script>
+<script src="/utils.js"></script>
+<script src="/auth.js"></script>
+<script src="/router.js"></script>
+<script src="/notifications.js"></script>
+<script src="/home.js"></script>
+<script src="/products.js"></script>
+<script src="/income.js"></script>
+<script src="/wallet.js"></script>
+<script src="/orders.js"></script>
+<script src="/profile.js"></script>
+<script src="/dropship.js"></script>
+<script src="/customerservice.js"></script>
+<script src="/app.js"></script>
 
 </body>
 </html>
