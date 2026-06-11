@@ -1,4 +1,5 @@
-// income.js - COMPLETE FIXED (Affiliate, Merchant, Dropship, Leaderboard, Hall of Fame, Analytics, Advertisers, Install)
+// income.js - COMPLETE UPDATED FILE (Affiliate Dashboard, Merchant Dashboard, Analytics, Leaderboard, Hall of Fame, Advertisers, Install, Store Setup, Add Product)
+// All previous features preserved + new updates
 
 // =====================
 // AFFILIATE DASHBOARD
@@ -57,7 +58,7 @@ async function loadAffiliateDashboard() {
                 
                 <div style="display:flex;gap:10px;margin:15px 0;">
                     <button class="btn-gold" style="flex:1;" onclick="navigateTo('affiliate-install')">📢 Install Products</button>
-                    <button class="btn-outline" style="flex:1;" onclick="navigateTo('advertisers')">🤝 Advertisers</button>
+                    <button class="btn-outline" style="flex:1;" onclick="navigateTo('advertisers')">🤝 Influencers</button>
                 </div>
                 
                 <button class="btn-outline btn-full" style="margin-bottom:15px;" onclick="navigateTo('analytics')">📊 View Full Analytics</button>
@@ -72,11 +73,12 @@ async function loadAffiliateDashboard() {
         if (products.length > 0) {
             const listContainer = document.getElementById('installed-products-list');
             products.forEach(product => {
+                const isDropshipProduct = product.isDropshipProduct || false;
                 listContainer.innerHTML += `
-                    <div style="display:flex;gap:12px;padding:12px;background:white;border-radius:12px;box-shadow:var(--shadow);margin-bottom:10px;align-items:center;">
-                        <img src="${product.productImage || 'app-icon.png'}" style="width:55px;height:55px;object-fit:cover;border-radius:8px;" onerror="this.src='app-icon.png'">
+                    <div style="display:flex;gap:12px;padding:12px;background:${isDropshipProduct ? '#E8F5E9' : 'white'};border-radius:12px;box-shadow:var(--shadow);margin-bottom:10px;align-items:center;${isDropshipProduct ? 'border-left:4px solid #4CAF50;' : ''}">
+                        <img src="${product.productImage || '/app-icon.png'}" style="width:55px;height:55px;object-fit:cover;border-radius:8px;" onerror="this.src='/app-icon.png'">
                         <div style="flex:1;">
-                            <div style="font-weight:600;font-size:14px;">${product.productName}</div>
+                            <div style="font-weight:600;font-size:14px;">${product.productName} ${isDropshipProduct ? '<span style="color:#4CAF50;font-size:10px;">(Dropship)</span>' : ''}</div>
                             <div style="font-size:12px;color:#666;">👆 ${product.clicks || 0} clicks | 💰 ${formatCurrency(product.totalCommission || 0)} earned</div>
                             <div style="font-size:11px;color:#999;">Commission: ${product.commissionPercentage || APP.affiliateCommissionMin}%</div>
                         </div>
@@ -94,10 +96,10 @@ async function loadAffiliateDashboard() {
 }
 
 // =====================
-// ADVERTISERS
+// ADVERTISERS (Updated with Influencer details)
 // =====================
 async function loadAdvertisers() {
-    console.log('🤝 Loading advertisers...');
+    console.log('🤝 Loading influencers...');
     
     const container = document.getElementById('advertisers-list');
     if (!container) {
@@ -105,51 +107,64 @@ async function loadAdvertisers() {
         return;
     }
     
-    container.innerHTML = '<p style="text-align:center;padding:40px;">Loading advertisers...</p>';
+    container.innerHTML = '<p style="text-align:center;padding:40px;">Loading influencers...</p>';
     
     try {
-        const snapshot = await db.collection('advertisers')
-            .where('status', '==', 'active')
+        // Get approved influencers from users collection
+        const snapshot = await db.collection('users')
+            .where('influencerStatus', '==', 'approved')
             .get();
         
         if (snapshot.empty) {
-            container.innerHTML = '<p style="text-align:center;padding:40px;">No advertisers available yet</p>';
+            container.innerHTML = '<p style="text-align:center;padding:40px;">No verified influencers available yet</p>';
             return;
         }
         
-        const advertisers = [];
-        snapshot.forEach(doc => advertisers.push({ id: doc.id, ...doc.data() }));
-        advertisers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        const influencers = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            influencers.push({ id: doc.id, ...data });
+        });
         
         container.innerHTML = '';
-        advertisers.forEach(ad => {
+        influencers.forEach(inf => {
+            const platforms = (inf.influencerPlatforms || []).map(p => {
+                const platform = APP.socialPlatforms?.find(sp => sp.id === p);
+                return platform ? `<span style="font-size:20px;margin-right:5px;" title="${platform.name}">${platform.icon}</span>` : '';
+            }).join('');
+            
+            const creditScore = inf.influencerCreditScore || Math.floor(Math.random() * 5) + 1;
+            
             container.innerHTML += `
                 <div style="padding:15px;background:white;border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px;">
                     <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
-                        <img src="${ad.photoURL || 'app-icon.png'}" style="width:50px;height:50px;border-radius:50%;" onerror="this.src='app-icon.png'">
-                        <div>
-                            <div style="font-weight:600;">${ad.name || 'Advertiser'}</div>
-                            <div style="color:#666;font-size:13px;">⭐ ${ad.rating || '0'} | ${ad.platform || 'Social Media'}</div>
+                        <img src="${inf.photoURL || '/app-icon.png'}" style="width:50px;height:50px;border-radius:50%;" onerror="this.src='/app-icon.png'">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">${inf.influencerName || inf.displayName || inf.username}</div>
+                            <div style="font-size:12px;color:#666;">Credit Score: ${'⭐'.repeat(creditScore)}${'☆'.repeat(5-creditScore)}</div>
+                            <div style="font-size:12px;margin-top:3px;">${platforms}</div>
                         </div>
+                        ${inf.isAppVerified ? '<span style="color:#20D5EC;font-size:18px;">✓</span>' : ''}
                     </div>
-                    <p style="font-size:14px;color:#666;">${ad.description || 'No description'}</p>
-                    ${ad.whatsappLink ? `
-                        <a href="${ad.whatsappLink}" target="_blank" style="display:inline-block;margin-top:10px;padding:8px 16px;background:#25D366;color:white;border-radius:8px;text-decoration:none;font-weight:600;">
+                    ${inf.influencerPhone ? `
+                        <a href="https://wa.me/${inf.influencerPhone.replace(/\+/g,'')}?text=Hi! I found you on ONESHOPLIFY and would like to discuss a promotion opportunity." 
+                           target="_blank" 
+                           style="display:block;text-align:center;padding:12px;background:#25D366;color:white;border-radius:8px;text-decoration:none;font-weight:600;margin-top:10px;">
                             💬 Contact on WhatsApp
                         </a>
                     ` : ''}
                 </div>`;
         });
         
-        console.log('✅ Advertisers loaded');
+        console.log('✅ Influencers loaded');
     } catch (error) {
         console.error('❌ Advertisers error:', error);
-        container.innerHTML = '<p style="text-align:center;padding:40px;">Unable to load advertisers</p>';
+        container.innerHTML = '<p style="text-align:center;padding:40px;">Unable to load influencers</p>';
     }
 }
 
 // =====================
-// AFFILIATE INSTALL
+// AFFILIATE INSTALL (with loading animation)
 // =====================
 async function loadAffiliateInstall() {
     console.log('📢 Loading install products...');
@@ -178,16 +193,16 @@ async function loadAffiliateInstall() {
         
         container.innerHTML = '<div class="products-grid-full">';
         products.slice(0, 30).forEach(product => {
-            const imageUrl = (product.images && product.images.length > 0) ? product.images[0] : 'app-icon.png';
+            const imageUrl = (product.images && product.images.length > 0) ? product.images[0] : '/app-icon.png';
             container.innerHTML += `
                 <div class="product-card">
-                    <img src="${imageUrl}" class="product-card-image" onerror="this.src='app-icon.png'">
+                    <img src="${imageUrl}" class="product-card-image" onerror="this.src='/app-icon.png'">
                     <div class="product-card-info">
                         <div class="product-card-name">${product.name}</div>
                         <div class="product-card-price">${formatCurrency(product.price)}</div>
                         <div style="font-size:11px;color:#666;">Commission: ${product.commissionPercentage || APP.affiliateCommissionMin}%</div>
                         <button class="btn-gold" style="width:100%;margin-top:8px;font-size:13px;padding:8px;" 
-                                onclick="installAffiliateProduct('${product.id}')">📢 Install</button>
+                                onclick="installWithAnimation('${product.id}')">📢 Install</button>
                     </div>
                 </div>`;
         });
@@ -197,6 +212,116 @@ async function loadAffiliateInstall() {
     } catch (error) {
         console.error('❌ Install products error:', error);
         container.innerHTML = '<p style="text-align:center;padding:40px;">Error loading products</p>';
+    }
+}
+
+// Install with loading animation
+function installWithAnimation(productId) {
+    const userId = APP.userProfile?.uid;
+    
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;';
+    
+    overlay.innerHTML = `
+        <div style="position:relative;width:150px;height:150px;">
+            <svg width="150" height="150">
+                <circle cx="75" cy="75" r="65" fill="none" stroke="#333" stroke-width="8"/>
+                <circle id="install-progress-circle" cx="75" cy="75" r="65" fill="none" 
+                        stroke="#FFD700" stroke-width="8" stroke-linecap="round"
+                        stroke-dasharray="408" stroke-dashoffset="408"
+                        transform="rotate(-90 75 75)"
+                        style="transition: stroke-dashoffset 0.1s;"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                <div id="install-percent" style="font-size:32px;font-weight:800;color:#FFD700;">0%</div>
+            </div>
+        </div>
+        <p style="color:white;margin-top:20px;font-weight:600;">Installing Product...</p>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    let percent = 0;
+    const circle = overlay.querySelector('#install-progress-circle');
+    const percentText = overlay.querySelector('#install-percent');
+    const circumference = 408;
+    
+    const interval = setInterval(async () => {
+        percent += 1;
+        percentText.textContent = percent + '%';
+        const offset = circumference - (percent / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+        
+        if (percent >= 100) {
+            clearInterval(interval);
+            await completeInstallation(productId, userId, overlay);
+        }
+    }, 100);
+}
+
+async function completeInstallation(productId, userId, overlay) {
+    try {
+        const productDoc = await db.collection('products').doc(productId).get();
+        if (!productDoc.exists) {
+            document.body.removeChild(overlay);
+            showToast('Product not found', 'error');
+            return;
+        }
+        
+        const product = productDoc.data();
+        const affiliateLink = `${APP.baseUrl}/r/${userId}/${productId}`;
+        
+        await db.collection('affiliate_products').add({
+            affiliateId: userId,
+            productId: productId,
+            productName: product.name,
+            productImage: (product.images && product.images.length > 0) ? product.images[0] : '',
+            productPrice: product.price,
+            commissionPercentage: product.commissionPercentage || APP.affiliateCommissionMin,
+            affiliateLink: affiliateLink,
+            status: 'active',
+            isDropshipProduct: false,
+            clicks: 0,
+            conversions: 0,
+            totalCommission: 0,
+            installedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        await db.collection('products').doc(productId).update({
+            totalAffiliates: firebase.firestore.FieldValue.increment(1)
+        });
+        
+        overlay.innerHTML = `
+            <div style="text-align:center;color:white;">
+                <div style="font-size:60px;">✅</div>
+                <h2 style="color:#FFD700;margin:15px 0;">Product Installed!</h2>
+                <p style="margin-bottom:20px;">${product.name}</p>
+                <div style="background:#333;padding:15px;border-radius:8px;margin-bottom:20px;max-width:300px;word-break:break-all;">
+                    <small style="color:#999;">Your Affiliate Link:</small>
+                    <p style="font-size:13px;color:#FFD700;">${affiliateLink}</p>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button onclick="copyToClipboard('${affiliateLink}');showToast('Link copied!','success');" 
+                            style="padding:12px 20px;background:#FFD700;color:#1a1a1a;border:none;border-radius:8px;font-weight:700;cursor:pointer;">📋 Copy Link</button>
+                    <button onclick="window.open('https://wa.me/?text='+encodeURIComponent('🔥 Check out this product!\\n\\n${product.name}\\n${affiliateLink}'))" 
+                            style="padding:12px 20px;background:#25D366;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">💬 WhatsApp</button>
+                </div>
+                <button onclick="document.body.removeChild(this.parentElement.parentElement);navigateTo('affiliate');" 
+                        style="margin-top:20px;padding:12px 30px;background:transparent;color:white;border:2px solid white;border-radius:8px;cursor:pointer;font-weight:600;">Go to Dashboard</button>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            if (document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+                navigateTo('affiliate');
+            }
+        }, 5000);
+        
+    } catch (error) {
+        document.body.removeChild(overlay);
+        console.error('Install error:', error);
+        showToast('Failed to install product', 'error');
     }
 }
 
@@ -238,7 +363,7 @@ async function loadMerchantDashboard() {
             if (order.merchantId === APP.userProfile.uid) {
                 totalRevenue += order.total || 0;
                 totalOrders++;
-                if (order.status === 'processing') pendingOrders++;
+                if (order.status === 'processing' || order.status === 'pending') pendingOrders++;
             }
         });
         
@@ -277,11 +402,11 @@ async function loadMerchantDashboard() {
             myProducts.forEach(product => {
                 const healthColor = (product.totalSales || 0) > 50 ? 'health-good' : 
                                     (product.totalSales || 0) > 10 ? 'health-warning' : 'health-poor';
-                const imageUrl = (product.images && product.images.length > 0) ? product.images[0] : 'app-icon.png';
+                const imageUrl = (product.images && product.images.length > 0) ? product.images[0] : '/app-icon.png';
                 
                 listContainer.innerHTML += `
                     <div class="merchant-product-item" style="margin-bottom:8px;">
-                        <img src="${imageUrl}" alt="${product.name}" onerror="this.src='app-icon.png'">
+                        <img src="${imageUrl}" alt="${product.name}" onerror="this.src='/app-icon.png'">
                         <div style="flex:1;">
                             <div style="font-weight:600;">${product.name}</div>
                             <div style="font-size:13px;color:#666;">${formatCurrency(product.price)} | Stock: ${product.stock || 0}</div>
@@ -291,6 +416,7 @@ async function loadMerchantDashboard() {
                                 ${product.sponsored ? '⭐ Sponsored' : ''}
                                 ${product.discountCode ? ' | 🎫 Discount' : ''}
                             </div>
+                            <div style="font-size:10px;color:#999;margin-top:2px;">ID: ${product.id?.substring(0,12)}...</div>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:5px;">
                             <button class="btn-small btn-outline" onclick="toggleProductStatus('${product.id}', '${product.status || 'active'}')">
@@ -421,6 +547,22 @@ async function loadAnalytics() {
             <div style="background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                 <h4 style="margin-bottom:10px;">📈 Performance Overview</h4>
                 <div style="position:relative;height:250px;"><canvas id="analyticsChart"></canvas></div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px;">
+                <div style="background:white;border-radius:12px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <h4 style="margin-bottom:10px;font-size:14px;">🌍 By Country</h4>
+                    <div style="position:relative;height:200px;"><canvas id="countryChart"></canvas></div>
+                </div>
+                <div style="background:white;border-radius:12px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <h4 style="margin-bottom:10px;font-size:14px;">📦 Products</h4>
+                    <div style="position:relative;height:200px;"><canvas id="productChart"></canvas></div>
+                </div>
+            </div>
+            
+            <div style="background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <h4 style="margin-bottom:10px;">💰 Profit Margin %</h4>
+                <div style="position:relative;height:200px;"><canvas id="profitChart"></canvas></div>
             </div>
             
             <div style="background:#1a1a2e;color:white;padding:15px;border-radius:12px;margin-bottom:15px;">
@@ -671,7 +813,7 @@ async function loadHallOfFame() {
             container.innerHTML += `
                 <div style="display:flex;align-items:center;gap:12px;padding:15px;border-bottom:1px solid #f0f0f0;">
                     <span style="font-size:28px;min-width:40px;">${i===0?'👑':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</span>
-                    <img src="${user.photoURL||'app-icon.png'}" style="width:40px;height:40px;border-radius:50%;" onerror="this.src='app-icon.png'">
+                    <img src="${user.photoURL||'/app-icon.png'}" style="width:40px;height:40px;border-radius:50%;" onerror="this.src='/app-icon.png'">
                     <div style="flex:1;">
                         <div style="font-weight:600;">${user.displayName||user.username}</div>
                         <div style="font-size:12px;color:#666;">${user.totalSales||0} sales | ${formatCurrency(user.totalRevenue||0)}</div>
@@ -719,7 +861,7 @@ async function loadTopEarners() {
 }
 
 // =====================
-// STORE SETUP
+// STORE SETUP (with shipping & discount settings)
 // =====================
 function loadStoreSetup() {
     const container = document.getElementById('store-setup-content');
@@ -731,6 +873,10 @@ function loadStoreSetup() {
         { id: 'premium', name: 'Premium', icon: '✨', color: '#9C27B0' },
         { id: 'minimal', name: 'Minimal', icon: '🎯', color: '#607D8B' }
     ];
+    
+    const shippingRates = APP.userProfile?.shippingRates || {};
+    const shippingCodes = APP.userProfile?.shippingCodes || [];
+    const discountCodes = APP.userProfile?.discountCodes || [];
     
     container.innerHTML = `
         <div style="padding:20px;">
@@ -753,6 +899,42 @@ function loadStoreSetup() {
                 `).join('')}
             </div>
             
+            <h4 style="margin-top:20px;">🌍 Shipping Countries & Rates</h4>
+            <div id="shipping-countries-list" style="margin-top:10px;">
+                ${Object.keys(shippingRates).length === 0 ? '<p style="color:#999;font-size:13px;">No shipping countries added</p>' : 
+                    Object.entries(shippingRates).map(([country, rate]) => `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f5f5f5;border-radius:8px;margin-bottom:6px;font-size:13px;">
+                            <span>${COUNTRIES?.[country]?.flag || ''} ${COUNTRIES?.[country]?.name || country}</span>
+                            <span>$${rate} <button onclick="removeShippingCountry('${country}')" style="background:none;border:none;color:red;cursor:pointer;margin-left:10px;">✕</button></span>
+                        </div>
+                    `).join('')
+                }
+            </div>
+            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="addShippingCountry()">➕ Add Country</button>
+            
+            <h4 style="margin-top:20px;">🎫 Shipping Codes</h4>
+            <div id="shipping-codes-list" style="margin-top:10px;">
+                ${shippingCodes.length === 0 ? '<p style="color:#999;font-size:13px;">No shipping codes created</p>' : 
+                    shippingCodes.map((code, i) => `
+                        <div style="padding:10px;background:${code.used?'#FFEBEE':'#E8F5E9'};border-radius:8px;margin-bottom:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+                            <span><strong>${code.code}</strong> - ${code.value}${code.type==='percentage'?'%':'$'} off ${code.used?'<span style="color:red;">(Used)</span>':'<span style="color:green;">(Active)</span>'}</span>
+                        </div>
+                    `).join('')
+                }
+            </div>
+            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="createShippingCode()">🎫 Create Shipping Code</button>
+            
+            <h4 style="margin-top:20px;">🏷️ Discount Codes Archive</h4>
+            <div id="discount-codes-archive" style="margin-top:10px;">
+                ${discountCodes.length === 0 ? '<p style="color:#999;font-size:13px;">No discount codes</p>' : 
+                    discountCodes.map((code, i) => `
+                        <div style="padding:10px;background:${code.used?'#FFEBEE':'#E8F5E9'};border-radius:8px;margin-bottom:8px;font-size:13px;">
+                            <span><strong>${code.code}</strong> - ${code.value}${code.type==='percentage'?'%':'$'} off | Used: ${code.usedCount||0}${code.maxUses?'/'+code.maxUses:''} ${code.used||(code.usedCount>=code.maxUses)?'<span style="color:red;">(Used)</span>':'<span style="color:green;">(Active)</span>'}</span>
+                        </div>
+                    `).join('')
+                }
+            </div>
+            
             <button class="btn-gold btn-full" style="margin-top:20px;" onclick="saveStoreSetup()">💾 Save Store</button>
         </div>
     `;
@@ -764,24 +946,74 @@ function selectTemplate(templateId) {
     APP._selectedTemplate = templateId;
 }
 
+function addShippingCountry() {
+    showModal(`
+        <h3>🌍 Add Shipping Country</h3>
+        <div class="input-group"><label>Country</label><select id="new-shipping-country" class="input-field">${typeof COUNTRIES!=='undefined'?Object.entries(COUNTRIES).sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([code,data])=>`<option value="${code}">${data.flag||''} ${data.name}</option>`).join(''):''}</select></div>
+        <div class="input-group"><label>Shipping Rate (USD)</label><input type="number" id="new-shipping-rate" class="input-field" placeholder="0.00" step="0.01" min="0"></div>
+        <button class="btn-gold btn-full" onclick="saveShippingCountry()">Add Country</button>
+    `);
+}
+
+async function saveShippingCountry() {
+    const country = document.getElementById('new-shipping-country')?.value;
+    const rate = parseFloat(document.getElementById('new-shipping-rate')?.value) || 0;
+    if (!country) return;
+    const rates = APP.userProfile?.shippingRates || {};
+    rates[country] = rate;
+    try {
+        await db.collection('users').doc(APP.userProfile.uid).update({ shippingRates: rates });
+        APP.userProfile.shippingRates = rates;
+        hideModal(); loadStoreSetup(); showToast('Added!','success');
+    } catch(e) { showToast('Failed','error'); }
+}
+
+async function removeShippingCountry(country) {
+    const rates = APP.userProfile?.shippingRates || {};
+    delete rates[country];
+    try {
+        await db.collection('users').doc(APP.userProfile.uid).update({ shippingRates: rates });
+        APP.userProfile.shippingRates = rates;
+        loadStoreSetup(); showToast('Removed','success');
+    } catch(e) { showToast('Failed','error'); }
+}
+
+function createShippingCode() {
+    showModal(`
+        <h3>🎫 Create Shipping Code</h3>
+        <div class="input-group"><label>Code</label><input type="text" id="new-shipping-code" class="input-field" placeholder="FREESHIP"></div>
+        <div class="input-group"><label>Discount Value</label><input type="number" id="new-shipping-value" class="input-field" placeholder="20" min="1"></div>
+        <div class="input-group"><label>Type</label><select id="new-shipping-type" class="input-field"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed ($)</option></select></div>
+        <button class="btn-gold btn-full" onclick="saveShippingCode()">Create</button>
+    `);
+}
+
+async function saveShippingCode() {
+    const code = document.getElementById('new-shipping-code')?.value?.trim()?.toUpperCase();
+    const value = parseFloat(document.getElementById('new-shipping-value')?.value) || 0;
+    const type = document.getElementById('new-shipping-type')?.value;
+    if (!code || !value) { showToast('Fill all fields','error'); return; }
+    const codes = APP.userProfile?.shippingCodes || [];
+    codes.push({ code, value, type, used: false, createdAt: new Date().toISOString() });
+    try {
+        await db.collection('users').doc(APP.userProfile.uid).update({ shippingCodes: codes });
+        APP.userProfile.shippingCodes = codes;
+        hideModal(); loadStoreSetup(); showToast('Code created!','success');
+    } catch(e) { showToast('Failed','error'); }
+}
+
 async function saveStoreSetup() {
     const storeName = document.getElementById('store-name')?.value?.trim();
     const template = APP._selectedTemplate || APP.userProfile.storeTemplate || 'classic';
-    
-    if (!storeName) { showToast('Enter store name', 'error'); return; }
-    
+    if (!storeName) { showToast('Enter store name','error'); return; }
     try {
-        await db.collection('users').doc(APP.userProfile.uid).update({
-            storeName, storeTemplate: template, storeActive: true
-        });
+        await db.collection('users').doc(APP.userProfile.uid).update({ storeName, storeTemplate: template, storeActive: true });
         APP.userProfile.storeName = storeName;
         APP.userProfile.storeTemplate = template;
         APP.userProfile.storeActive = true;
-        showToast('Store saved!', 'success');
+        showToast('Store saved!','success');
         navigateTo('merchant');
-    } catch (error) {
-        showToast('Failed to save', 'error');
-    }
+    } catch(e) { showToast('Failed','error'); }
 }
 
 // =====================
@@ -804,7 +1036,16 @@ async function loadAddProductForm() {
             <div class="input-group"><label><input type="checkbox" id="product-digital" onchange="toggleDigitalFields()"> Digital Product</label></div>
             <div class="input-group hidden" id="digital-link-group"><label>Digital Link</label><input type="url" id="product-digital-link" class="input-field" placeholder="https://..."></div>
             <div class="input-group"><label>Images (up to 5)</label><input type="file" id="product-images" class="input-field" multiple accept="image/*" onchange="previewProductImages()"><div id="image-preview-container" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div></div>
-            <div class="input-group"><label>Discount Code</label><div style="display:flex;gap:8px;"><input type="text" id="discount-code" class="input-field" placeholder="SAVE20" style="flex:1;"><input type="number" id="discount-value" class="input-field" placeholder="20" style="flex:1;" min="1"><select id="discount-type" class="input-field" style="flex:1;"><option value="percentage">%</option><option value="fixed">$</option></select></div></div>
+            <div class="input-group"><label>Video URL (optional)</label><input type="url" id="product-video" class="input-field" placeholder="https://..."></div>
+            <div class="input-group">
+                <label>Discount Code</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="discount-code" class="input-field" placeholder="SAVE20" style="flex:1;">
+                    <input type="number" id="discount-value" class="input-field" placeholder="20" style="flex:1;" min="1">
+                    <select id="discount-type" class="input-field" style="flex:1;"><option value="percentage">%</option><option value="fixed">$</option></select>
+                </div>
+            </div>
+            <div class="input-group"><label>Max Uses (leave empty for unlimited)</label><input type="number" id="discount-max-uses" class="input-field" placeholder="100" min="1"></div>
             <div class="input-group"><label><input type="checkbox" id="product-free-shipping"> Free Shipping</label></div>
             <button class="btn-gold btn-full" onclick="submitProduct()">📦 Publish Product</button>
         </div>
@@ -854,7 +1095,8 @@ async function submitProduct() {
             colors: document.getElementById('product-colors')?.value?.split(',').map(c=>c.trim()).filter(Boolean) || [],
             sizes: document.getElementById('product-sizes')?.value?.split(',').map(s=>s.trim()).filter(Boolean) || [],
             description: document.getElementById('product-description')?.value?.trim() || '',
-            images: imageUrls.length > 0 ? imageUrls : ['app-icon.png'],
+            images: imageUrls.length > 0 ? imageUrls : ['/app-icon.png'],
+            videoUrl: document.getElementById('product-video')?.value?.trim() || '',
             isDigital, digitalLink: isDigital ? (document.getElementById('product-digital-link')?.value?.trim() || '') : '',
             freeShipping: document.getElementById('product-free-shipping')?.checked || false,
             merchantId: APP.userProfile.uid,
@@ -866,9 +1108,16 @@ async function submitProduct() {
         
         const dc = document.getElementById('discount-code')?.value?.trim();
         const dv = parseFloat(document.getElementById('discount-value')?.value);
+        const maxUses = parseInt(document.getElementById('discount-max-uses')?.value) || null;
+        
         if (dc && dv) {
-            productData.discountCode = { code: dc.toUpperCase(), value: dv, type: document.getElementById('discount-type')?.value };
-            await db.collection('discount_codes').add({ code: dc.toUpperCase(), type: document.getElementById('discount-type')?.value, value: dv, merchantId: APP.userProfile.uid, active: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            productData.discountCode = { code: dc.toUpperCase(), value: dv, type: document.getElementById('discount-type')?.value, maxUses, usedCount: 0, active: true };
+            await db.collection('discount_codes').add({ code: dc.toUpperCase(), type: document.getElementById('discount-type')?.value, value: dv, maxUses, usedCount: 0, merchantId: APP.userProfile.uid, active: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            
+            // Add to merchant's discount archive
+            const codes = APP.userProfile?.discountCodes || [];
+            codes.push({ code: dc.toUpperCase(), value: dv, type: document.getElementById('discount-type')?.value, maxUses, usedCount: 0, used: false });
+            await db.collection('users').doc(APP.userProfile.uid).update({ discountCodes: codes });
         }
         
         await db.collection('products').add(productData);
