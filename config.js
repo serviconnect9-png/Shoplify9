@@ -1,11 +1,11 @@
-// config.js - PRODUCTION CONFIGURATION (Real API Endpoints, No Placeholders)
+// config.js - FINAL UPDATED (ONESHOPLIFY branding, all features, social platforms)
 
 const APP = {
     // =====================
     // APP IDENTITY
     // =====================
-    appName: "Shoplify",
-    version: "5.0.0",
+    appName: "ONESHOPLIFY",
+    version: "6.0.0",
     poweredBy: "Rev",
     baseUrl: "https://shoplify9.vercel.app",
     
@@ -59,7 +59,7 @@ const APP = {
     // =====================
     merchantPrice: 2,        // $2 lifetime merchant access
     affiliatePrice: 3,       // $3/month affiliate access
-    advertiserPrice: 1,      // $1/month advertiser access
+    advertiserPrice: 1,      // $1/month influencer access
     dropshipStarter: 5,      // $5/month starter plan
     dropshipGrowth: 15,      // $15/month growth plan
     dropshipPro: 30,         // $30/month professional plan
@@ -77,7 +77,7 @@ const APP = {
     // AFFILIATE COMMISSION
     // =====================
     affiliateCommissionMin: 4,  // 4% minimum commission
-    affiliateCommissionMax: 5,  // 5% maximum commission
+    affiliateCommissionMax: 10, // 10% maximum commission (for dropshipper recruits)
     
     // =====================
     // VERIFICATION REQUIREMENTS
@@ -148,10 +148,21 @@ const APP = {
         "Software",
         "E-Books",
         "Courses"
+    ],
+    
+    // =====================
+    // SOCIAL MEDIA PLATFORMS (for influencers)
+    // =====================
+    socialPlatforms: [
+        { id: 'tiktok', name: 'TikTok', icon: '🎵', color: '#000000' },
+        { id: 'instagram', name: 'Instagram', icon: '📷', color: '#E4405F' },
+        { id: 'telegram', name: 'Telegram', icon: '✈️', color: '#0088cc' },
+        { id: 'whatsapp', name: 'WhatsApp', icon: '💬', color: '#25D366' },
+        { id: 'linkedin', name: 'LinkedIn', icon: '💼', color: '#0A66C2' }
     ]
 };
 
-console.log('⚙️ Shoplify Enterprise v' + APP.version + ' - Production Config Loaded');
+console.log('⚙️ ONESHOPLIFY Enterprise v' + APP.version + ' - Production Config Loaded');
 console.log('📍 Base URL:', APP.baseUrl);
 console.log('💱 Exchange API:', APP.exchangeRateApiUrl);
 console.log('💳 Flutterwave Key:', APP.flutterwaveKey.substring(0, 15) + '...');
