@@ -1,5 +1,7 @@
-// profile.js - COMPLETE UNCOMPRESSED FINAL VERSION
+// profile.js - COMPLETE FINAL UNCOMPRESSED VERSION
 // ONESHOPLIFY Enterprise - Profile, Settings, Subscriptions, Influencer Application
+// Real SVG Social Media Icons
+
 console.log('✅ profile.js loaded');
 
 // =====================
@@ -309,7 +311,7 @@ function proceedToInfluencerApplication() {
 }
 
 // =====================
-// INFLUENCER APPLICATION FORM
+// INFLUENCER APPLICATION FORM (with real SVG icons)
 // =====================
 function loadInfluencerApplication() {
     const container = document.getElementById('influencer-apply-content');
@@ -361,9 +363,11 @@ function loadInfluencerApplication() {
                     ${APP.socialPlatforms.map(p => `
                         <div onclick="toggleInfluencerPlatform('${p.id}')" 
                              id="inf-platform-${p.id}"
-                             style="padding:12px 16px;border:2px solid ${savedData.platforms?.includes(p.id) ? '#FFD700' : '#e0e0e0'};border-radius:12px;cursor:pointer;text-align:center;background:${savedData.platforms?.includes(p.id) ? '#FFFDE7' : 'white'};min-width:80px;transition:all 0.2s;">
-                            <div style="font-size:28px;">${p.icon}</div>
-                            <div style="font-size:11px;font-weight:600;margin-top:4px;">${p.name}</div>
+                             style="padding:15px 12px;border:2px solid ${savedData.platforms?.includes(p.id) ? '#FFD700' : '#e0e0e0'};border-radius:12px;cursor:pointer;text-align:center;background:${savedData.platforms?.includes(p.id) ? '#FFFDE7' : 'white'};min-width:85px;transition:all 0.2s;color:${p.color};">
+                            <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                                ${p.icon}
+                            </div>
+                            <div style="font-size:11px;font-weight:600;margin-top:6px;color:#333;">${p.name}</div>
                         </div>
                     `).join('')}
                 </div>
