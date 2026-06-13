@@ -1,5 +1,6 @@
-// income.js - COMPLETE UPDATED FILE (Affiliate Dashboard, Merchant Dashboard, Analytics, Leaderboard, Hall of Fame, Advertisers, Install, Store Setup, Add Product)
-// All previous features preserved + new updates
+// income.js - COMPLETE FINAL VERSION 
+// Affiliate Dashboard, Merchant Dashboard, Analytics, Leaderboard, Hall of Fame, 
+// Advertisers/Influencers, Install Products, Store Setup, Add Product, Top Earners
 
 // =====================
 // AFFILIATE DASHBOARD
@@ -14,21 +15,15 @@ async function loadAffiliateDashboard() {
     }
     
     const container = document.getElementById('affiliate-content');
-    if (!container) {
-        console.error('❌ affiliate-content container not found');
-        return;
-    }
+    if (!container) { console.error('❌ affiliate-content container not found'); return; }
     
     container.innerHTML = '<p style="text-align:center;padding:40px;">Loading dashboard...</p>';
     
     try {
         const installedSnapshot = await db.collection('affiliate_products')
-            .where('affiliateId', '==', APP.userProfile.uid)
-            .get();
+            .where('affiliateId', '==', APP.userProfile.uid).get();
         
-        let totalClicks = 0;
-        let totalConversions = 0;
-        let totalCommission = 0;
+        let totalClicks = 0, totalConversions = 0, totalCommission = 0;
         const products = [];
         
         installedSnapshot.forEach(doc => {
@@ -67,8 +62,7 @@ async function loadAffiliateDashboard() {
                 <div id="installed-products-list">
                     ${products.length === 0 ? '<p style="color:#999;padding:20px;text-align:center;">No products installed yet. Go to Install Products!</p>' : ''}
                 </div>
-            </div>
-        `;
+            </div>`;
         
         if (products.length > 0) {
             const listContainer = document.getElementById('installed-products-list');
@@ -96,21 +90,17 @@ async function loadAffiliateDashboard() {
 }
 
 // =====================
-// ADVERTISERS (Updated with Influencer details)
+// ADVERTISERS / INFLUENCERS
 // =====================
 async function loadAdvertisers() {
     console.log('🤝 Loading influencers...');
     
     const container = document.getElementById('advertisers-list');
-    if (!container) {
-        console.error('❌ advertisers-list container not found');
-        return;
-    }
+    if (!container) { console.error('❌ advertisers-list container not found'); return; }
     
     container.innerHTML = '<p style="text-align:center;padding:40px;">Loading influencers...</p>';
     
     try {
-        // Get approved influencers from users collection
         const snapshot = await db.collection('users')
             .where('influencerStatus', '==', 'approved')
             .get();
@@ -170,10 +160,7 @@ async function loadAffiliateInstall() {
     console.log('📢 Loading install products...');
     
     const container = document.getElementById('install-products');
-    if (!container) {
-        console.error('❌ install-products container not found');
-        return;
-    }
+    if (!container) { console.error('❌ install-products container not found'); return; }
     
     container.innerHTML = '<p style="text-align:center;padding:40px;">Loading products...</p>';
     
@@ -215,7 +202,7 @@ async function loadAffiliateInstall() {
     }
 }
 
-// Install with loading animation
+// Install with loading animation (10 seconds)
 function installWithAnimation(productId) {
     const userId = APP.userProfile?.uid;
     
@@ -256,7 +243,7 @@ function installWithAnimation(productId) {
             clearInterval(interval);
             await completeInstallation(productId, userId, overlay);
         }
-    }, 100);
+    }, 100); // 100ms * 100 = 10 seconds
 }
 
 async function completeInstallation(productId, userId, overlay) {
@@ -305,6 +292,8 @@ async function completeInstallation(productId, userId, overlay) {
                             style="padding:12px 20px;background:#FFD700;color:#1a1a1a;border:none;border-radius:8px;font-weight:700;cursor:pointer;">📋 Copy Link</button>
                     <button onclick="window.open('https://wa.me/?text='+encodeURIComponent('🔥 Check out this product!\\n\\n${product.name}\\n${affiliateLink}'))" 
                             style="padding:12px 20px;background:#25D366;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">💬 WhatsApp</button>
+                    <button onclick="window.open('https://t.me/share/url?url='+encodeURIComponent('${affiliateLink}')+'&text='+encodeURIComponent('🔥 ${product.name}'))" 
+                            style="padding:12px 20px;background:#0088cc;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">✈️ Telegram</button>
                 </div>
                 <button onclick="document.body.removeChild(this.parentElement.parentElement);navigateTo('affiliate');" 
                         style="margin-top:20px;padding:12px 30px;background:transparent;color:white;border:2px solid white;border-radius:8px;cursor:pointer;font-weight:600;">Go to Dashboard</button>
@@ -338,10 +327,7 @@ async function loadMerchantDashboard() {
     }
     
     const container = document.getElementById('merchant-content');
-    if (!container) {
-        console.error('❌ merchant-content container not found');
-        return;
-    }
+    if (!container) { console.error('❌ merchant-content container not found'); return; }
     
     container.innerHTML = '<p style="text-align:center;padding:40px;">Loading dashboard...</p>';
     
@@ -493,7 +479,7 @@ async function confirmSponsorship(productId) {
 }
 
 // =====================
-// ANALYTICS
+// ANALYTICS SYSTEM (Chart.js)
 // =====================
 let analyticsChart = null;
 let countryChart = null;
@@ -566,7 +552,7 @@ async function loadAnalytics() {
             </div>
             
             <div style="background:#1a1a2e;color:white;padding:15px;border-radius:12px;margin-bottom:15px;">
-                <h3 style="margin-bottom:10px;">🧠 Insights</h3>
+                <h3 style="margin-bottom:10px;">🧠 AI Insights</h3>
                 <p id="insightText" style="line-height:1.6;">Analyzing your data...</p>
             </div>
         </div>
@@ -602,7 +588,6 @@ function initializeCharts() {
 
 function updateAllCharts(data) {
     if (!data || typeof Chart === 'undefined') return;
-    
     if (analyticsChart) {
         analyticsChart.data.labels = data.labels || [];
         analyticsChart.data.datasets[0].data = data.revenue || [];
@@ -615,7 +600,6 @@ function updateSummaryStats(data) {
     if (!data) return;
     const totalRevenue = (data.revenue || []).reduce((a, b) => a + b, 0);
     const totalOrders = (data.orders || []).reduce((a, b) => a + b, 0);
-    
     document.getElementById('stat-revenue') && (document.getElementById('stat-revenue').textContent = formatCurrency(totalRevenue));
     document.getElementById('stat-orders') && (document.getElementById('stat-orders').textContent = totalOrders);
 }
@@ -623,21 +607,17 @@ function updateSummaryStats(data) {
 function updateAIInsights(data) {
     const insightEl = document.getElementById('insightText');
     if (!insightEl || !data) return;
-    
     const revenue = data.revenue || [];
     if (revenue.length < 2 || revenue.every(v => v === 0)) {
         insightEl.textContent = '📊 Start making sales to see AI-powered insights!';
         return;
     }
-    
     const last = revenue.length - 1;
     const insights = [];
-    
     if (revenue[last] > revenue[last - 1] && revenue[last - 1] > 0) {
         const growth = ((revenue[last] - revenue[last - 1]) / revenue[last - 1] * 100).toFixed(1);
         insights.push(`📈 Revenue grew ${growth}% - keep it up!`);
     }
-    
     if (insights.length === 0) insights.push('✅ Performance is stable. Continue your strategy.');
     insightEl.textContent = insights.join(' ');
 }
@@ -645,11 +625,9 @@ function updateAIInsights(data) {
 async function generateAnalyticsFromUserData(userId) {
     try {
         const ordersSnapshot = await db.collection('orders').where('userId', '==', userId).get();
-        
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const revenue = [0,0,0,0,0,0,0];
         const orders = [0,0,0,0,0,0,0];
-        
         ordersSnapshot.forEach(doc => {
             const order = doc.data();
             const date = order.createdAt?.toDate?.() || order.createdAt || new Date();
@@ -657,12 +635,10 @@ async function generateAnalyticsFromUserData(userId) {
             revenue[dayIndex] += order.total || 0;
             orders[dayIndex] += 1;
         });
-        
         const analyticsData = { labels: days, revenue, orders, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
         updateAllCharts(analyticsData);
         updateSummaryStats(analyticsData);
         updateAIInsights(analyticsData);
-        
     } catch (error) {
         console.error('Generate analytics error:', error);
         const insightEl = document.getElementById('insightText');
@@ -680,16 +656,13 @@ function switchAnalyticsRange() {
 }
 
 // =====================
-// LEADERBOARD
+// LEADERBOARD (Clickable earners with details)
 // =====================
 async function loadLeaderboard() {
     console.log('🏆 Loading leaderboard...');
     
     const container = document.getElementById('leaderboard-content');
-    if (!container) {
-        console.error('❌ leaderboard-content container not found');
-        return;
-    }
+    if (!container) { console.error('❌ leaderboard-content container not found'); return; }
     
     container.innerHTML = '<p style="text-align:center;padding:40px;">Loading leaderboard...</p>';
     
@@ -785,10 +758,7 @@ async function loadHallOfFame() {
     console.log('🌟 Loading Hall of Fame...');
     
     const container = document.getElementById('hall-fame-content');
-    if (!container) {
-        console.error('❌ hall-fame-content container not found');
-        return;
-    }
+    if (!container) { console.error('❌ hall-fame-content container not found'); return; }
     
     container.innerHTML = '<p style="text-align:center;padding:40px;">Loading Hall of Fame...</p>';
     
@@ -831,7 +801,7 @@ async function loadHallOfFame() {
 }
 
 // =====================
-// TOP EARNERS FOR HOME
+// TOP EARNERS FOR HOME PAGE
 // =====================
 async function loadTopEarners() {
     const container = document.getElementById('top-earners');
@@ -861,7 +831,7 @@ async function loadTopEarners() {
 }
 
 // =====================
-// STORE SETUP (with shipping & discount settings)
+// STORE SETUP (Shipping, Discounts, Templates)
 // =====================
 function loadStoreSetup() {
     const container = document.getElementById('store-setup-content');
@@ -1037,14 +1007,7 @@ async function loadAddProductForm() {
             <div class="input-group hidden" id="digital-link-group"><label>Digital Link</label><input type="url" id="product-digital-link" class="input-field" placeholder="https://..."></div>
             <div class="input-group"><label>Images (up to 5)</label><input type="file" id="product-images" class="input-field" multiple accept="image/*" onchange="previewProductImages()"><div id="image-preview-container" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div></div>
             <div class="input-group"><label>Video URL (optional)</label><input type="url" id="product-video" class="input-field" placeholder="https://..."></div>
-            <div class="input-group">
-                <label>Discount Code</label>
-                <div style="display:flex;gap:8px;">
-                    <input type="text" id="discount-code" class="input-field" placeholder="SAVE20" style="flex:1;">
-                    <input type="number" id="discount-value" class="input-field" placeholder="20" style="flex:1;" min="1">
-                    <select id="discount-type" class="input-field" style="flex:1;"><option value="percentage">%</option><option value="fixed">$</option></select>
-                </div>
-            </div>
+            <div class="input-group"><label>Discount Code</label><div style="display:flex;gap:8px;"><input type="text" id="discount-code" class="input-field" placeholder="SAVE20" style="flex:1;"><input type="number" id="discount-value" class="input-field" placeholder="20" style="flex:1;" min="1"><select id="discount-type" class="input-field" style="flex:1;"><option value="percentage">%</option><option value="fixed">$</option></select></div></div>
             <div class="input-group"><label>Max Uses (leave empty for unlimited)</label><input type="number" id="discount-max-uses" class="input-field" placeholder="100" min="1"></div>
             <div class="input-group"><label><input type="checkbox" id="product-free-shipping"> Free Shipping</label></div>
             <button class="btn-gold btn-full" onclick="submitProduct()">📦 Publish Product</button>
@@ -1113,8 +1076,6 @@ async function submitProduct() {
         if (dc && dv) {
             productData.discountCode = { code: dc.toUpperCase(), value: dv, type: document.getElementById('discount-type')?.value, maxUses, usedCount: 0, active: true };
             await db.collection('discount_codes').add({ code: dc.toUpperCase(), type: document.getElementById('discount-type')?.value, value: dv, maxUses, usedCount: 0, merchantId: APP.userProfile.uid, active: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            
-            // Add to merchant's discount archive
             const codes = APP.userProfile?.discountCodes || [];
             codes.push({ code: dc.toUpperCase(), value: dv, type: document.getElementById('discount-type')?.value, maxUses, usedCount: 0, used: false });
             await db.collection('users').doc(APP.userProfile.uid).update({ discountCodes: codes });
@@ -1130,3 +1091,5 @@ async function submitProduct() {
         showToast('Failed to publish', 'error');
     }
 }
+
+console.log('✅ income.js fully loaded - ONESHOPLIFY Ready');
