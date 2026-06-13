@@ -1,15 +1,26 @@
-// auth.js - ABSOLUTE MINIMUM VERSION THAT WORKS
+// auth.js - WORKING VERSION
+console.log('✅ auth.js loaded');
 
-// Wait for everything to load
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔐 Auth.js loaded and ready');
-});
+let authInProgress = false;
 
-// =====================
-// GOOGLE SIGN IN
-// =====================
+function initializeAuth() {
+    console.log('🔐 Auth initialized');
+    const savedUserId = localStorage.getItem('shoplify_uid');
+    if (localStorage.getItem('shoplify_auth') === 'true' && savedUserId) {
+        db.collection('users').doc(savedUserId).get().then(doc => {
+            if (doc.exists && !doc.data().isSuspended) {
+                APP.currentUser = { uid: savedUserId };
+                APP.userProfile = doc.data();
+                APP.userProfile.uid = savedUserId;
+            }
+        }).catch(() => {});
+    }
+}
+
 async function signInWithGoogle() {
-    console.log('🔑 Google sign-in called');
+    if (authInProgress) return;
+    authInProgress = true;
+    
     try {
         showLoader();
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -17,169 +28,106 @@ async function signInWithGoogle() {
         const result = await auth.signInWithPopup(provider);
         const user = result.user;
         
-        console.log('✅ Google user:', user.uid);
-        
-        // Check if user exists
         const userDoc = await db.collection('users').doc(user.uid).get();
         
         if (!userDoc.exists) {
-            // New user
             APP.currentUser = user;
             hideLoader();
-            // Show account type screen
-            document.getElementById('screen-auth').classList.add('hidden');
-            document.getElementById('screen-account-type').classList.remove('hidden');
-            window.location.hash = 'account-type';
+            navigateTo('account-type');
             showToast('Welcome! Choose your account type.', 'info');
         } else {
-            // Existing user
             const userData = userDoc.data();
+            if (userData.isSuspended) {
+                await auth.signOut();
+                hideLoader();
+                showToast('Account suspended.', 'error');
+                authInProgress = false;
+                return;
+            }
             APP.currentUser = user;
             APP.userProfile = userData;
             APP.userProfile.uid = user.uid;
-            
             localStorage.setItem('shoplify_auth', 'true');
             localStorage.setItem('shoplify_uid', user.uid);
-            
             hideLoader();
-            document.getElementById('screen-auth').classList.add('hidden');
-            document.getElementById('screen-home').classList.remove('hidden');
-            window.location.hash = 'home';
+            navigateTo('home');
             showToast('Welcome back! 👋', 'success');
         }
     } catch (error) {
         hideLoader();
-        console.error('Google error:', error);
-        if (error.code !== 'auth/popup-closed-by-user') {
-            showToast('Sign-in failed', 'error');
-        }
+        if (error.code !== 'auth/popup-closed-by-user') showToast('Sign-in failed', 'error');
     }
+    authInProgress = false;
 }
 
-// =====================
-// USERNAME/PASSWORD LOGIN
-// =====================
 async function signInWithCredentials() {
-    console.log('🔑 Login called');
+    if (authInProgress) return;
     
-    const usernameInput = document.getElementById('auth-username');
-    const passwordInput = document.getElementById('auth-password');
+    const username = document.getElementById('auth-username')?.value?.trim()?.toLowerCase();
+    const password = document.getElementById('auth-password')?.value;
     
-    if (!usernameInput || !passwordInput) {
-        showToast('Form not ready', 'error');
-        return;
-    }
+    if (!username || !password) { showToast('Enter username and password', 'error'); return; }
     
-    const username = usernameInput.value.trim().toLowerCase();
-    const password = passwordInput.value;
-    
-    if (!username || !password) {
-        showToast('Enter username and password', 'error');
-        return;
-    }
-    
-    showLoader();
+    authInProgress = true;
+    const btn = document.querySelector('.auth-form .btn-gold');
+    if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
     
     try {
-        const snapshot = await db.collection('users')
-            .where('username', '==', username)
-            .limit(1)
-            .get();
-        
-        if (snapshot.empty) {
-            hideLoader();
-            showToast('Account not found', 'error');
-            return;
-        }
+        const snapshot = await db.collection('users').where('username', '==', username).limit(1).get();
+        if (snapshot.empty) { showToast('Account not found', 'error'); resetBtn(btn); authInProgress = false; return; }
         
         const doc = snapshot.docs[0];
         const user = doc.data();
+        if (user.password !== password) { showToast('Invalid password', 'error'); resetBtn(btn); authInProgress = false; return; }
+        if (user.isSuspended) { showToast('Account suspended', 'error'); resetBtn(btn); authInProgress = false; return; }
         
-        if (user.password !== password) {
-            hideLoader();
-            showToast('Invalid password', 'error');
-            return;
-        }
-        
-        // SUCCESS
         APP.currentUser = { uid: doc.id, email: user.email };
         APP.userProfile = user;
         APP.userProfile.uid = doc.id;
-        
         localStorage.setItem('shoplify_auth', 'true');
         localStorage.setItem('shoplify_uid', doc.id);
         
-        usernameInput.value = '';
-        passwordInput.value = '';
-        
-        hideLoader();
-        document.getElementById('screen-auth').classList.add('hidden');
-        document.getElementById('screen-home').classList.remove('hidden');
-        window.location.hash = 'home';
+        resetBtn(btn);
+        document.getElementById('auth-username').value = '';
+        document.getElementById('auth-password').value = '';
+        navigateTo('home');
         showToast(`Welcome, ${user.displayName || username}!`, 'success');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Login error:', error);
-        showToast('Login failed', 'error');
-    }
+    } catch (error) { showToast('Login failed', 'error'); resetBtn(btn); }
+    authInProgress = false;
 }
 
-// =====================
-// SELECT ACCOUNT TYPE
-// =====================
+function resetBtn(btn) { if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; } }
+
 function selectAccountType(type) {
-    console.log('📝 Type selected:', type);
     APP.selectedAccountType = type;
-    
-    // Highlight
     document.querySelectorAll('.account-type-card').forEach(c => c.classList.remove('selected'));
     const cards = document.querySelectorAll('.account-type-card');
-    cards.forEach(card => {
-        if (card.textContent.toLowerCase().includes(type)) card.classList.add('selected');
-    });
+    cards.forEach(card => { if (card.textContent.toLowerCase().includes(type)) card.classList.add('selected'); });
     
-    setTimeout(function() {
+    setTimeout(() => {
         if (type === 'customer') {
-            // Customer - go directly to setup
-            document.getElementById('screen-account-type').classList.add('hidden');
-            document.getElementById('screen-setup-credentials').classList.remove('hidden');
-            window.location.hash = 'setup-credentials';
+            navigateTo('setup-credentials');
             setTimeout(populateCountryDropdown, 300);
         } else {
-            // Affiliate/Merchant - Google auth first
             signInWithGoogleForSetup(type);
         }
     }, 400);
 }
 
 async function signInWithGoogleForSetup(type) {
-    console.log('🔑 Google setup for:', type);
     try {
         showLoader();
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         const result = await auth.signInWithPopup(provider);
-        
         APP.currentUser = result.user;
         APP.selectedAccountType = type;
-        
         hideLoader();
-        document.getElementById('screen-account-type').classList.add('hidden');
-        document.getElementById('screen-setup-credentials').classList.remove('hidden');
-        window.location.hash = 'setup-credentials';
+        navigateTo('setup-credentials');
         setTimeout(populateCountryDropdown, 500);
-    } catch (error) {
-        hideLoader();
-        if (error.code !== 'auth/popup-closed-by-user') {
-            showToast('Auth failed', 'error');
-        }
-    }
+    } catch (error) { hideLoader(); if (error.code !== 'auth/popup-closed-by-user') showToast('Auth failed', 'error'); }
 }
 
-// =====================
-// COMPLETE SETUP
-// =====================
 async function completeSetup() {
     const username = document.getElementById('setup-username')?.value?.trim()?.toLowerCase();
     const password = document.getElementById('setup-password')?.value;
@@ -187,49 +135,28 @@ async function completeSetup() {
     const phone = document.getElementById('setup-phone')?.value?.trim();
     const accountType = APP.selectedAccountType || 'customer';
     
-    if (!username || !/^[a-z0-9]{3,30}$/.test(username)) {
-        showToast('Username: 3-30 lowercase letters/numbers', 'error');
-        return;
-    }
-    if (!password || password.length < 6) {
-        showToast('Password: at least 6 characters', 'error');
-        return;
-    }
-    if (!country) {
-        showToast('Select your country', 'error');
-        return;
-    }
-    if (!phone) {
-        showToast('Phone number required', 'error');
-        return;
-    }
+    if (!username || !/^[a-z0-9]{3,30}$/.test(username)) { showToast('Username: 3-30 lowercase letters/numbers', 'error'); return; }
+    if (!password || password.length < 6) { showToast('Password: 6+ characters', 'error'); return; }
+    if (!country) { showToast('Select country', 'error'); return; }
+    if (!phone) { showToast('Phone required', 'error'); return; }
     
-    const userId = APP.currentUser?.uid || ('user_' + Date.now());
-    
+    const userId = APP.currentUser?.uid || generateId();
     showLoader();
     
     try {
-        // Check username
         const check = await db.collection('users').where('username', '==', username).limit(1).get();
-        if (!check.empty) {
-            hideLoader();
-            showToast('Username taken', 'error');
-            return;
-        }
+        if (!check.empty) { hideLoader(); showToast('Username taken', 'error'); return; }
         
         const cData = COUNTRIES[country] || {};
-        
         const userData = {
-            uid: userId,
-            email: APP.currentUser?.email || `${username}@shoplify.user`,
+            uid: userId, email: APP.currentUser?.email || `${username}@shoplify.user`,
             displayName: APP.currentUser?.displayName || username,
             photoURL: APP.currentUser?.photoURL || '',
             username, password,
             phoneNumber: (cData.code || '+1') + phone,
             country, countryFlag: cData.flag || '🌍',
             currency: cData.currency || 'USD',
-            accountType,
-            walletBalance: 0, affiliateEarnings: 0, pendingEarnings: 0, escrowBalance: 0,
+            accountType, walletBalance: 0, affiliateEarnings: 0, pendingEarnings: 0, escrowBalance: 0,
             isMerchant: false, isAffiliate: false, isDropshipper: false,
             merchantSubscription: false, affiliateSubscription: false,
             totalSales: 0, totalRevenue: 0, totalReferrals: 0,
@@ -239,24 +166,15 @@ async function completeSetup() {
         };
         
         await db.collection('users').doc(userId).set(userData);
-        
         APP.currentUser = { uid: userId, email: userData.email };
         APP.userProfile = userData;
-        
         localStorage.setItem('shoplify_auth', 'true');
         localStorage.setItem('shoplify_uid', userId);
         
         hideLoader();
-        document.getElementById('screen-setup-credentials').classList.add('hidden');
-        document.getElementById('screen-home').classList.remove('hidden');
-        window.location.hash = 'home';
+        navigateTo('home');
         showToast('Account created! 🚀', 'success');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Setup error:', error);
-        showToast('Failed. Try again.', 'error');
-    }
+    } catch (error) { hideLoader(); showToast('Failed', 'error'); }
 }
 
 function populateCountryDropdown() {
@@ -277,25 +195,19 @@ function populateCountryDropdown() {
 function updateCountryCode() {
     const country = document.getElementById('setup-country')?.value;
     const display = document.getElementById('country-code-display');
-    if (display && country && COUNTRIES?.[country]) {
-        display.textContent = COUNTRIES[country].code || '+1';
-    }
+    if (display && country && COUNTRIES?.[country]) display.textContent = COUNTRIES[country].code || '+1';
 }
 
-function isLoggedIn() {
-    return localStorage.getItem('shoplify_auth') === 'true';
-}
+function isLoggedIn() { return localStorage.getItem('shoplify_auth') === 'true'; }
 
 function logout() {
     localStorage.removeItem('shoplify_auth');
     localStorage.removeItem('shoplify_uid');
     sessionStorage.clear();
-    auth.signOut().catch(function(){});
+    auth.signOut().catch(() => {});
     APP.currentUser = null;
     APP.userProfile = null;
-    document.querySelectorAll('.screen').forEach(function(s) { s.classList.add('hidden'); });
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     document.getElementById('screen-auth').classList.remove('hidden');
     window.location.hash = 'auth';
 }
-
-console.log('✅ auth.js loaded');
