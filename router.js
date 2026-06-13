@@ -1,4 +1,4 @@
-// router.js - COMPLETE FINAL VERSION (Fixed Affiliate Deep Links, All Routes)
+// router.js - COMPLETE FINAL VERSION (All Routes, Deep Links, Dropship Store, Affiliate Links)
 
 let currentScreen = 'onboarding';
 let screenHistory = [];
@@ -9,11 +9,11 @@ let screenHistory = [];
 function navigateTo(screen, data = null) {
     console.log('🧭 Navigating to:', screen, data ? JSON.stringify(data).substring(0, 100) : '');
     
-    // Don't navigate to same screen
-    if (screen === currentScreen && screen !== 'product-detail') return;
+    // Don't navigate to same screen (except product-detail and dropship-store which can reload)
+    if (screen === currentScreen && screen !== 'product-detail' && screen !== 'dropship-store') return;
     
-    // Check auth for protected screens
-    const publicScreens = ['onboarding', 'auth', 'account-type', 'setup-credentials', 'dropship-store'];
+    // Public screens that don't require authentication
+    const publicScreens = ['onboarding', 'auth', 'account-type', 'setup-credentials', 'dropship-store', 'product-detail', 'sponsored'];
     if (!publicScreens.includes(screen) && !isLoggedIn()) {
         console.log('🔒 Not authenticated, redirecting to auth');
         screen = 'auth';
@@ -43,10 +43,17 @@ function navigateTo(screen, data = null) {
         handleScreenLoad(screen, data);
         
         // Scroll to top
-        document.getElementById('app').scrollTop = 0;
+        const appEl = document.getElementById('app');
+        if (appEl) appEl.scrollTop = 0;
     } else {
         console.error('❌ Screen not found:', screen);
-        navigateTo('home');
+        // Try to go to home as fallback
+        const homeScreen = document.getElementById('screen-home');
+        if (homeScreen) {
+            homeScreen.classList.remove('hidden');
+            currentScreen = 'home';
+            window.location.hash = 'home';
+        }
     }
 }
 
@@ -63,8 +70,10 @@ function handleScreenLoad(screen, data) {
     console.log('📄 Loading screen:', screen);
     
     switch(screen) {
+        // ========== MAIN SCREENS ==========
         case 'home':
             if (typeof loadHomeScreen === 'function') loadHomeScreen();
+            else document.getElementById('home-content') && (document.getElementById('home-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>');
             break;
             
         case 'marketplace':
@@ -78,14 +87,10 @@ function handleScreenLoad(screen, data) {
                 if (deepLinkProductId) {
                     console.log('🔗 Loading product from deep link:', deepLinkProductId);
                     data = { productId: deepLinkProductId };
-                    // Don't clear it yet - product-detail might need it again
                 }
             }
-            if (typeof loadProductDetail === 'function') {
-                loadProductDetail(data);
-            } else {
-                console.error('❌ loadProductDetail not found');
-            }
+            if (typeof loadProductDetail === 'function') loadProductDetail(data);
+            else console.error('❌ loadProductDetail not found');
             break;
             
         case 'sponsored':
@@ -104,9 +109,10 @@ function handleScreenLoad(screen, data) {
             if (typeof loadWalletScreen === 'function') loadWalletScreen();
             break;
             
+        // ========== AFFILIATE SCREENS ==========
         case 'affiliate':
             if (typeof loadAffiliateDashboard === 'function') loadAffiliateDashboard();
-            else console.error('❌ loadAffiliateDashboard not found');
+            else { console.error('❌ loadAffiliateDashboard not found'); document.getElementById('affiliate-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>'; }
             break;
             
         case 'advertisers':
@@ -117,9 +123,10 @@ function handleScreenLoad(screen, data) {
             if (typeof loadAffiliateInstall === 'function') loadAffiliateInstall();
             break;
             
+        // ========== MERCHANT SCREENS ==========
         case 'merchant':
             if (typeof loadMerchantDashboard === 'function') loadMerchantDashboard();
-            else console.error('❌ loadMerchantDashboard not found');
+            else { console.error('❌ loadMerchantDashboard not found'); document.getElementById('merchant-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>'; }
             break;
             
         case 'store-setup':
@@ -130,25 +137,52 @@ function handleScreenLoad(screen, data) {
             if (typeof loadAddProductForm === 'function') loadAddProductForm();
             break;
             
+        // ========== DROPSHIP SCREENS ==========
         case 'dropship':
             if (typeof loadDropshipDashboard === 'function') loadDropshipDashboard();
-            else console.error('❌ loadDropshipDashboard not found');
+            else { console.error('❌ loadDropshipDashboard not found'); document.getElementById('dropship-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>'; }
             break;
             
         case 'dropship-store':
-            // Check if this is a public store view
+            console.log('🏪 Loading dropship store...');
+            console.log('   Data:', data);
+            console.log('   isPublic:', data?.isPublic);
+            console.log('   username:', data?.username);
+            
+            // Check for public store view
             if (data && data.isPublic && data.username) {
-                console.log('🏪 Loading public store for:', data.username);
+                console.log('🏪 Loading PUBLIC store for:', data.username);
                 if (typeof loadPublicDropshipStore === 'function') {
                     loadPublicDropshipStore(data.username);
                 } else {
                     console.error('❌ loadPublicDropshipStore not found');
+                    const container = document.getElementById('dropship-store-content');
+                    if (container) container.innerHTML = '<p style="text-align:center;padding:40px;">Error loading public store</p>';
+                }
+            } else if (data && data.username) {
+                // Store with username but maybe not marked as public
+                console.log('🏪 Loading store for username:', data.username);
+                if (typeof loadPublicDropshipStore === 'function') {
+                    loadPublicDropshipStore(data.username);
+                } else if (typeof loadDropshipStore === 'function') {
+                    loadDropshipStore(data);
                 }
             } else if (typeof loadDropshipStore === 'function') {
+                // Owner viewing their own store
                 loadDropshipStore(data);
+            } else {
+                console.error('❌ No dropship store function found');
+                const container = document.getElementById('dropship-store-content');
+                if (container) container.innerHTML = '<p style="text-align:center;padding:40px;">Store not available</p>';
             }
             break;
             
+        case 'recruit-affiliates':
+            if (typeof loadRecruitAffiliates === 'function') loadRecruitAffiliates();
+            else { console.error('❌ loadRecruitAffiliates not found'); document.getElementById('recruit-affiliates-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>'; }
+            break;
+            
+        // ========== USER SCREENS ==========
         case 'profile':
             if (typeof loadProfileScreen === 'function') loadProfileScreen();
             break;
@@ -165,15 +199,22 @@ function handleScreenLoad(screen, data) {
             if (typeof loadStoreTransactions === 'function') loadStoreTransactions();
             break;
             
+        // ========== COMMUNITY SCREENS ==========
         case 'leaderboard':
             if (typeof loadLeaderboard === 'function') loadLeaderboard();
-            else console.error('❌ loadLeaderboard not found');
+            else { console.error('❌ loadLeaderboard not found'); document.getElementById('leaderboard-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>'; }
             break;
             
         case 'analytics':
             if (typeof loadAnalytics === 'function') loadAnalytics();
             break;
             
+        case 'hall-of-fame':
+            if (typeof loadHallOfFame === 'function') loadHallOfFame();
+            else { console.error('❌ loadHallOfFame not found'); document.getElementById('hall-fame-content').innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>'; }
+            break;
+            
+        // ========== ADMIN SCREENS ==========
         case 'customerservice':
             if (typeof loadCustomerServicePanel === 'function') loadCustomerServicePanel();
             break;
@@ -186,31 +227,25 @@ function handleScreenLoad(screen, data) {
             if (typeof loadVIPPage === 'function') loadVIPPage();
             break;
             
-        case 'hall-of-fame':
-            if (typeof loadHallOfFame === 'function') loadHallOfFame();
-            else console.error('❌ loadHallOfFame not found');
-            break;
-            
         case 'flash-campaigns':
             if (typeof loadFlashCampaigns === 'function') loadFlashCampaigns();
             break;
             
+        // ========== INFLUENCER SCREENS ==========
         case 'influencer-apply':
             if (typeof loadInfluencerApplication === 'function') loadInfluencerApplication();
             break;
             
-        case 'recruit-affiliates':
-            if (typeof loadRecruitAffiliates === 'function') loadRecruitAffiliates();
-            break;
-            
         default:
             console.warn('⚠️ Unknown screen:', screen);
+            // Fallback to home
+            if (typeof loadHomeScreen === 'function') loadHomeScreen();
             break;
     }
 }
 
 // =====================
-// DEEP LINK DETECTION (Runs on page load)
+// DEEP LINK DETECTION - Runs immediately on page load
 // =====================
 (function detectDeepLinks() {
     const path = window.location.pathname;
@@ -224,8 +259,6 @@ function handleScreenLoad(screen, data) {
         console.log('📢 AFFILIATE LINK DETECTED');
         console.log('   Affiliate ID:', affiliateId);
         console.log('   Product ID:', productId);
-        
-        // Store in sessionStorage
         sessionStorage.setItem('affiliate_click', JSON.stringify({ affiliateId, productId }));
         sessionStorage.setItem('deep_link_product', productId);
         sessionStorage.setItem('deep_link_type', 'affiliate');
@@ -236,16 +269,19 @@ function handleScreenLoad(screen, data) {
     const storeMatch = path.match(/^\/store\/(.+)/);
     if (storeMatch) {
         const username = storeMatch[1];
-        console.log('🏪 STORE LINK DETECTED:', username);
+        console.log('🏪 STORE LINK DETECTED');
+        console.log('   Username:', username);
         sessionStorage.setItem('store_view', username);
         sessionStorage.setItem('deep_link_type', 'store');
+        sessionStorage.setItem('force_dropship_store', 'true');
     }
     
     // Product URL: /p/:productId
     const productMatch = path.match(/^\/p\/(.+)/);
     if (productMatch) {
         const productId = productMatch[1];
-        console.log('🛍️ PRODUCT LINK DETECTED:', productId);
+        console.log('🛍️ PRODUCT LINK DETECTED');
+        console.log('   Product ID:', productId);
         sessionStorage.setItem('deep_link_product', productId);
         sessionStorage.setItem('deep_link_type', 'product');
         sessionStorage.setItem('force_product_detail', 'true');
@@ -261,7 +297,7 @@ function handleScreenLoad(screen, data) {
 })();
 
 // =====================
-// INITIAL SCREEN DETERMINATION
+// INITIAL SCREEN DETERMINATION - Runs when page loads
 // =====================
 window.addEventListener('load', () => {
     console.log('📱 Window loaded, determining initial screen...');
@@ -269,81 +305,98 @@ window.addEventListener('load', () => {
     const path = window.location.pathname;
     const hash = window.location.hash.replace('#', '');
     const forceProduct = sessionStorage.getItem('force_product_detail');
+    const forceStore = sessionStorage.getItem('force_dropship_store');
     const deepLinkType = sessionStorage.getItem('deep_link_type');
     const deepLinkProduct = sessionStorage.getItem('deep_link_product');
+    const storeUsername = sessionStorage.getItem('store_view');
     
     let initialScreen = 'onboarding';
     
-    // CHECK DEEP LINKS FIRST - They take priority
-    if (deepLinkType === 'affiliate' && deepLinkProduct && forceProduct === 'true') {
-        console.log('📢 Affiliate deep link - forcing product-detail');
-        initialScreen = 'product-detail';
-        // Don't clear force_product_detail yet - product-detail handler needs it
-    } else if (deepLinkType === 'product' && deepLinkProduct && forceProduct === 'true') {
-        console.log('🛍️ Product deep link - forcing product-detail');
-        initialScreen = 'product-detail';
-    } else if (deepLinkType === 'store') {
-        console.log('🏪 Store deep link - going to dropship-store');
+    // PRIORITY 1: Dropship Store deep link
+    if (forceStore === 'true' && storeUsername) {
+        console.log('🏪 Store deep link detected - going to dropship-store');
         initialScreen = 'dropship-store';
-    } else if (path.match(/^\/r\/([^\/]+)\/([^\/]+)/)) {
-        // Direct affiliate link match
-        console.log('📢 Direct affiliate URL match - forcing product-detail');
+    }
+    // PRIORITY 2: Affiliate deep link
+    else if (deepLinkType === 'affiliate' && deepLinkProduct && forceProduct === 'true') {
+        console.log('📢 Affiliate deep link - product-detail');
         initialScreen = 'product-detail';
-    } else if (path.match(/^\/p\/(.+)/)) {
-        // Direct product link match
-        console.log('🛍️ Direct product URL match - forcing product-detail');
+    }
+    // PRIORITY 3: Product deep link
+    else if (deepLinkType === 'product' && deepLinkProduct && forceProduct === 'true') {
+        console.log('🛍️ Product deep link - product-detail');
         initialScreen = 'product-detail';
-    } else if (path.match(/^\/store\/(.+)/)) {
-        console.log('🏪 Direct store URL match - going to dropship-store');
+    }
+    // PRIORITY 4: Direct URL patterns
+    else if (path.match(/^\/store\/(.+)/)) {
+        console.log('🏪 Direct store URL match');
         initialScreen = 'dropship-store';
-    } else if (hash) {
+    }
+    else if (path.match(/^\/r\/([^\/]+)\/([^\/]+)/)) {
+        console.log('📢 Direct affiliate URL match');
+        initialScreen = 'product-detail';
+    }
+    else if (path.match(/^\/p\/(.+)/)) {
+        console.log('🛍️ Direct product URL match');
+        initialScreen = 'product-detail';
+    }
+    // PRIORITY 5: Hash-based navigation
+    else if (hash) {
         initialScreen = hash;
     }
     
-    // If user is logged in and on auth/onboarding, go to home
-    // BUT NOT if there's a deep link
-    if (!forceProduct && !deepLinkType) {
+    // Only redirect to home if no deep link and user is logged in
+    if (!forceProduct && !forceStore && !deepLinkType && !path.match(/^\/(store|p|r)\//)) {
         if (isLoggedIn() && ['onboarding', 'auth'].includes(initialScreen)) {
-            console.log('👤 User logged in, going to home');
+            console.log('👤 User already logged in, going to home');
             initialScreen = 'home';
         }
     }
     
-    console.log('🎯 Initial screen:', initialScreen);
-    navigateTo(initialScreen);
+    console.log('🎯 Final initial screen:', initialScreen);
+    
+    // Navigate to the determined screen
+    setTimeout(() => {
+        navigateTo(initialScreen);
+    }, 100);
 });
 
 // =====================
-// HANDLE DEEP LINKS AFTER AUTH
+// HANDLE DEEP LINKS AFTER AUTHENTICATION
 // =====================
 function handleDeepLinksAfterAuth() {
     const linkType = sessionStorage.getItem('deep_link_type');
     const forceProduct = sessionStorage.getItem('force_product_detail');
+    const forceStore = sessionStorage.getItem('force_dropship_store');
+    const storeUsername = sessionStorage.getItem('store_view');
     
     console.log('🔗 Handling deep links after auth...');
     console.log('   Type:', linkType);
-    console.log('   Force Product:', forceProduct);
+    console.log('   Store username:', storeUsername);
+    console.log('   Force product:', forceProduct);
+    console.log('   Force store:', forceStore);
     
-    if (linkType === 'store') {
-        const username = sessionStorage.getItem('store_view');
-        if (username) {
-            sessionStorage.removeItem('deep_link_type');
-            sessionStorage.removeItem('store_view');
-            console.log('🏪 Navigating to public store:', username);
-            navigateTo('dropship-store', { username, isPublic: true });
-        }
-    } else if ((linkType === 'affiliate' || linkType === 'product') && forceProduct === 'true') {
+    // PRIORITY 1: Store deep link
+    if (forceStore === 'true' && storeUsername) {
+        sessionStorage.removeItem('deep_link_type');
+        sessionStorage.removeItem('force_dropship_store');
+        sessionStorage.removeItem('store_view');
+        console.log('🏪 Navigating to public store:', storeUsername);
+        navigateTo('dropship-store', { username: storeUsername, isPublic: true });
+        return;
+    }
+    
+    // PRIORITY 2: Product/Affiliate deep link
+    if ((linkType === 'affiliate' || linkType === 'product') && forceProduct === 'true') {
         const productId = sessionStorage.getItem('deep_link_product');
         if (productId) {
             // Track affiliate click if applicable
             if (linkType === 'affiliate') {
                 const data = JSON.parse(sessionStorage.getItem('affiliate_click') || '{}');
-                if (data.affiliateId && data.productId) {
-                    if (typeof trackAffiliateClick === 'function') {
-                        trackAffiliateClick(data.affiliateId, data.productId);
-                    }
-                    sessionStorage.removeItem('affiliate_click');
+                if (data.affiliateId && data.productId && typeof trackAffiliateClick === 'function') {
+                    trackAffiliateClick(data.affiliateId, data.productId);
                 }
+                sessionStorage.removeItem('affiliate_click');
             }
             
             sessionStorage.removeItem('deep_link_type');
@@ -357,7 +410,7 @@ function handleDeepLinksAfterAuth() {
 }
 
 // =====================
-// POPSTATE HANDLER (Browser back/forward)
+// BROWSER BACK/FORWARD HANDLER
 // =====================
 window.addEventListener('popstate', () => {
     const hash = window.location.hash.replace('#', '');
@@ -378,4 +431,5 @@ window.addEventListener('hashchange', () => {
     }
 });
 
-console.log('✅ router.js loaded - ONESHOPLIFY Router Ready');
+console.log('✅ router.js fully loaded - ONESHOPLIFY Router Ready');
+console.log('   Available screens: home, marketplace, product-detail, sponsored, checkout, orders, wallet, affiliate, advertisers, affiliate-install, merchant, store-setup, add-product, dropship, dropship-store, recruit-affiliates, profile, settings, notifications, transactions, leaderboard, analytics, hall-of-fame, customerservice, disputes-manage, vip, flash-campaigns, influencer-apply');
