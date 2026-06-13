@@ -1,4 +1,5 @@
-// router.js - WITH goToAccountType FIX
+// router.js - FIXED: Public screens accessible without auth
+
 let currentScreen = 'onboarding';
 let screenHistory = [];
 
@@ -16,8 +17,16 @@ function navigateTo(screen, data) {
     
     if (screen === currentScreen && screen !== 'product-detail' && screen !== 'dropship-store') return;
     
-    const publicScreens = ['onboarding', 'auth', 'account-type', 'setup-credentials', 'dropship-store', 'product-detail', 'sponsored'];
+    // FIXED: More screens are public - no auth required
+    const publicScreens = [
+        'onboarding', 'auth', 'account-type', 'setup-credentials', 
+        'dropship-store', 'product-detail', 'sponsored', 'marketplace',
+        'hall-of-fame', 'leaderboard'
+    ];
+    
+    // Only check auth for NON-public screens
     if (!publicScreens.includes(screen) && !isLoggedIn()) {
+        console.log('🔒 Auth required for:', screen);
         screen = 'auth';
     }
     
@@ -32,7 +41,8 @@ function navigateTo(screen, data) {
         window.location.hash = screen;
         if (data) sessionStorage.setItem(`screen_data_${screen}`, JSON.stringify(data));
         handleScreenLoad(screen, data);
-        document.getElementById('app').scrollTop = 0;
+        const appEl = document.getElementById('app');
+        if (appEl) appEl.scrollTop = 0;
     } else {
         console.error('❌ Screen not found:', screen);
     }
@@ -68,7 +78,11 @@ function handleScreenLoad(screen, data) {
         case 'dropship-store':
             if (data && data.isPublic && data.username) {
                 if (typeof loadPublicDropshipStore === 'function') loadPublicDropshipStore(data.username);
-            } else if (typeof loadDropshipStore === 'function') loadDropshipStore(data);
+            } else if (data && data.username) {
+                if (typeof loadPublicDropshipStore === 'function') loadPublicDropshipStore(data.username);
+            } else if (typeof loadDropshipStore === 'function') {
+                loadDropshipStore(data);
+            }
             break;
         case 'profile': if (typeof loadProfileScreen === 'function') loadProfileScreen(); break;
         case 'settings': if (typeof loadSettingsScreen === 'function') loadSettingsScreen(); break;
@@ -127,7 +141,9 @@ window.addEventListener('load', () => {
         initialScreen = hash;
     }
     
-    if (isLoggedIn() && ['onboarding', 'auth'].includes(initialScreen)) {
+    // FIXED: Don't force home for public screens
+    const publicScreens = ['dropship-store', 'product-detail', 'marketplace', 'sponsored', 'hall-of-fame', 'leaderboard'];
+    if (!publicScreens.includes(initialScreen) && isLoggedIn() && ['onboarding', 'auth'].includes(initialScreen)) {
         initialScreen = 'home';
     }
     
