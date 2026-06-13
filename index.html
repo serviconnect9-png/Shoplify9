@@ -92,11 +92,11 @@
                     <p>Shop products, track orders, write reviews</p>
                     <span class="type-badge free">Free</span>
                 </div>
-                <div class="account-type-card" onclick="selectAccountType('affiliate')">
-                    <div class="type-icon">📢</div>
-                    <h3>Affiliate</h3>
-                    <p>Promote products, earn 4-5% commission</p>
-                    <span class="type-badge paid">$3/month</span>
+                <div class="account-type-card" onclick="selectAccountType('dropshipper')">
+                    <div class="type-icon">📦</div>
+                    <h3>Dropshipper</h3>
+                    <p>Resell products without inventory, earn profits</p>
+                    <span class="type-badge paid">From $5/mo</span>
                 </div>
                 <div class="account-type-card" onclick="selectAccountType('merchant')">
                     <div class="type-icon">🏪</div>
@@ -197,7 +197,7 @@
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="navigateTo('home')"><span>🏠</span>Home</button>
             <button class="nav-item" onclick="navigateTo('marketplace')"><span>🛍️</span>Shop</button>
-            <button class="nav-item" id="nav-affiliate" onclick="navigateTo('affiliate')" style="display:none;"><span>📢</span>Affiliate</button>
+            <button class="nav-item" id="nav-dropship" onclick="navigateTo('dropship')" style="display:none;"><span>📦</span>Dropship</button>
             <button class="nav-item" id="nav-merchant" onclick="navigateTo('merchant')" style="display:none;"><span>🏪</span>Store</button>
             <button class="nav-item" onclick="navigateTo('orders')"><span>📦</span>Orders</button>
         </nav>
@@ -286,31 +286,22 @@
         </div>
     </div>
 
-    <!-- ==================== AFFILIATE DASHBOARD SCREEN ==================== -->
-    <div id="screen-affiliate" class="screen hidden">
+    <!-- ==================== DROPSHIP DASHBOARD SCREEN ==================== -->
+    <div id="screen-dropship" class="screen hidden">
         <div class="page-header">
             <button class="back-btn" onclick="navigateTo('home')">←</button>
-            <h2>Affiliate Dashboard</h2>
+            <h2>Dropship Dashboard</h2>
         </div>
-        <div class="affiliate-content" id="affiliate-content"></div>
+        <div class="dropship-content" id="dropship-content"></div>
     </div>
 
-    <!-- ==================== ADVERTISERS SCREEN ==================== -->
-    <div id="screen-advertisers" class="screen hidden">
+    <!-- ==================== DROPSHIP STORE SCREEN ==================== -->
+    <div id="screen-dropship-store" class="screen hidden">
         <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('affiliate')">←</button>
-            <h2>Influencers</h2>
+            <button class="back-btn" onclick="navigateTo('dropship')">←</button>
+            <h2>Store</h2>
         </div>
-        <div class="advertisers-list" id="advertisers-list"></div>
-    </div>
-
-    <!-- ==================== AFFILIATE INSTALL SCREEN ==================== -->
-    <div id="screen-affiliate-install" class="screen hidden">
-        <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('affiliate')">←</button>
-            <h2>Install Products</h2>
-        </div>
-        <div class="install-products" id="install-products"></div>
+        <div class="dropship-store-content" id="dropship-store-content"></div>
     </div>
 
     <!-- ==================== MERCHANT DASHBOARD SCREEN ==================== -->
@@ -340,22 +331,22 @@
         <div class="add-product-form" id="add-product-form"></div>
     </div>
 
-    <!-- ==================== DROPSHIP DASHBOARD SCREEN ==================== -->
-    <div id="screen-dropship" class="screen hidden">
-        <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('home')">←</button>
-            <h2>Dropship Dashboard</h2>
-        </div>
-        <div class="dropship-content" id="dropship-content"></div>
-    </div>
-
-    <!-- ==================== DROPSHIP STORE SCREEN ==================== -->
-    <div id="screen-dropship-store" class="screen hidden">
+    <!-- ==================== ADVERTISERS / INFLUENCERS SCREEN ==================== -->
+    <div id="screen-advertisers" class="screen hidden">
         <div class="page-header">
             <button class="back-btn" onclick="navigateTo('dropship')">←</button>
-            <h2>Store</h2>
+            <h2>Influencers</h2>
         </div>
-        <div class="dropship-store-content" id="dropship-store-content"></div>
+        <div class="advertisers-list" id="advertisers-list"></div>
+    </div>
+
+    <!-- ==================== RECRUIT AFFILIATES SCREEN ==================== -->
+    <div id="screen-recruit-affiliates" class="screen hidden">
+        <div class="page-header">
+            <button class="back-btn" onclick="navigateTo('dropship')">←</button>
+            <h2>Recruit Affiliates</h2>
+        </div>
+        <div class="recruit-affiliates-content" id="recruit-affiliates-content"></div>
     </div>
 
     <!-- ==================== PROFILE SCREEN ==================== -->
@@ -406,7 +397,7 @@
     <!-- ==================== ANALYTICS SCREEN ==================== -->
     <div id="screen-analytics" class="screen hidden">
         <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('affiliate')">←</button>
+            <button class="back-btn" onclick="navigateTo('dropship')">←</button>
             <h2>Analytics</h2>
         </div>
         <div class="analytics-content" id="analytics-content"></div>
@@ -430,15 +421,6 @@
         <div class="disputes-content" id="disputes-content"></div>
     </div>
 
-    <!-- ==================== VIP SCREEN ==================== -->
-    <div id="screen-vip" class="screen hidden">
-        <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('home')">←</button>
-            <h2>VIP Program</h2>
-        </div>
-        <div class="vip-content" id="vip-content"></div>
-    </div>
-
     <!-- ==================== HALL OF FAME SCREEN ==================== -->
     <div id="screen-hall-of-fame" class="screen hidden">
         <div class="page-header">
@@ -446,15 +428,6 @@
             <h2>Hall of Fame</h2>
         </div>
         <div class="hall-fame-content" id="hall-fame-content"></div>
-    </div>
-
-    <!-- ==================== FLASH CAMPAIGNS SCREEN ==================== -->
-    <div id="screen-flash-campaigns" class="screen hidden">
-        <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('home')">←</button>
-            <h2>Flash Campaigns</h2>
-        </div>
-        <div class="flash-content" id="flash-content"></div>
     </div>
 
     <!-- ==================== INFLUENCER APPLICATION SCREEN ==================== -->
@@ -473,15 +446,6 @@
             <h2>Influencer Dashboard</h2>
         </div>
         <div class="influencer-dashboard-content" id="influencer-dashboard-content"></div>
-    </div>
-
-    <!-- ==================== RECRUIT AFFILIATES SCREEN ==================== -->
-    <div id="screen-recruit-affiliates" class="screen hidden">
-        <div class="page-header">
-            <button class="back-btn" onclick="navigateTo('dropship')">←</button>
-            <h2>Recruit Affiliates</h2>
-        </div>
-        <div class="recruit-affiliates-content" id="recruit-affiliates-content"></div>
     </div>
 
     <!-- ==================== LOADER ==================== -->
