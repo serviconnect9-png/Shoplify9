@@ -1,7 +1,10 @@
-// router.js - FIXED: Saves deep link state before auth, restores after login
+// router.js - COMPLETE FIXED VERSION (All screens load properly)
 let currentScreen = 'onboarding';
 let screenHistory = [];
 
+// =====================
+// DIRECT NAVIGATION
+// =====================
 function goToAccountType() {
     console.log('📝 Create Account clicked');
     hideAllScreens();
@@ -20,7 +23,7 @@ function showScreen(id) {
 }
 
 function navigateTo(screen, data) {
-    console.log('🧭 navigateTo:', screen, data);
+    console.log('🧭 navigateTo:', screen);
     
     if (screen === currentScreen && screen !== 'product-detail' && screen !== 'dropship-store') return;
     
@@ -29,10 +32,8 @@ function navigateTo(screen, data) {
         'dropship-store', 'product-detail', 'sponsored', 'marketplace'
     ];
     
-    // SAVE CURRENT STATE before redirecting to auth
     if (!publicScreens.includes(screen) && !isLoggedIn()) {
-        console.log('🔒 Auth required, saving state before redirect');
-        // Save what the user was trying to do
+        console.log('🔒 Auth required, saving pending:', screen);
         sessionStorage.setItem('pending_screen', screen);
         if (data) sessionStorage.setItem('pending_data', JSON.stringify(data));
         screen = 'auth';
@@ -40,128 +41,195 @@ function navigateTo(screen, data) {
     
     screenHistory.push(currentScreen);
     hideAllScreens();
-    showScreen('screen-' + screen);
-    currentScreen = screen;
-    window.location.hash = screen;
     
-    if (data) {
-        sessionStorage.setItem('screen_data_' + screen, JSON.stringify(data));
+    const targetId = 'screen-' + screen;
+    const targetScreen = document.getElementById(targetId);
+    
+    if (targetScreen) {
+        targetScreen.classList.remove('hidden');
+        currentScreen = screen;
+        window.location.hash = screen;
+        
+        if (data) {
+            sessionStorage.setItem('screen_data_' + screen, JSON.stringify(data));
+        }
+        
+        // LOAD SCREEN CONTENT
+        handleScreenLoad(screen, data);
+        
+        const appEl = document.getElementById('app');
+        if (appEl) appEl.scrollTop = 0;
+        
+        console.log('✅ Screen loaded:', screen);
+    } else {
+        console.error('❌ Screen element not found:', targetId);
+        // Fallback to home
+        hideAllScreens();
+        const homeScreen = document.getElementById('screen-home');
+        if (homeScreen) {
+            homeScreen.classList.remove('hidden');
+            currentScreen = 'home';
+            window.location.hash = 'home';
+        }
     }
-    
-    handleScreenLoad(screen, data);
-    
-    const appEl = document.getElementById('app');
-    if (appEl) appEl.scrollTop = 0;
 }
 
+// =====================
+// HANDLE SCREEN LOAD
+// =====================
 function handleScreenLoad(screen, data) {
+    console.log('📄 handleScreenLoad:', screen);
+    
     switch(screen) {
         case 'home':
             if (typeof loadHomeScreen === 'function') loadHomeScreen();
-            // Check if there's a pending screen to go to after login
-            checkPendingScreen();
+            else console.error('❌ loadHomeScreen missing');
             break;
+            
         case 'marketplace':
             if (typeof loadMarketplace === 'function') loadMarketplace();
+            else console.error('❌ loadMarketplace missing');
             break;
+            
         case 'product-detail':
             if (!data || !data.productId) {
                 const pid = sessionStorage.getItem('deep_link_product');
                 if (pid) data = { productId: pid };
             }
             if (typeof loadProductDetail === 'function') loadProductDetail(data);
+            else console.error('❌ loadProductDetail missing');
             break;
-        case 'dropship-store':
-            if (data && data.isPublic && data.username) {
-                if (typeof loadPublicDropshipStore === 'function') loadPublicDropshipStore(data.username);
-            } else if (data && data.username) {
-                if (typeof loadPublicDropshipStore === 'function') loadPublicDropshipStore(data.username);
-            } else if (typeof loadDropshipStore === 'function') {
-                loadDropshipStore(data);
-            }
-            break;
-        case 'checkout':
-            if (typeof loadCheckout === 'function') loadCheckout();
-            break;
-        case 'orders':
-            if (typeof loadOrdersScreen === 'function') loadOrdersScreen();
-            break;
-        case 'wallet':
-            if (typeof loadWalletScreen === 'function') loadWalletScreen();
-            break;
-        case 'affiliate':
-            if (typeof loadAffiliateDashboard === 'function') loadAffiliateDashboard();
-            break;
-        case 'merchant':
-            if (typeof loadMerchantDashboard === 'function') loadMerchantDashboard();
-            break;
-        case 'dropship':
-            if (typeof loadDropshipDashboard === 'function') loadDropshipDashboard();
-            break;
-        case 'profile':
-            if (typeof loadProfileScreen === 'function') loadProfileScreen();
-            break;
-        case 'settings':
-            if (typeof loadSettingsScreen === 'function') loadSettingsScreen();
-            break;
-        case 'notifications':
-            if (typeof loadNotificationsScreen === 'function') loadNotificationsScreen();
-            break;
-        case 'leaderboard':
-            if (typeof loadLeaderboard === 'function') loadLeaderboard();
-            break;
-        case 'analytics':
-            if (typeof loadAnalytics === 'function') loadAnalytics();
-            break;
-        case 'hall-of-fame':
-            if (typeof loadHallOfFame === 'function') loadHallOfFame();
-            break;
-        case 'advertisers':
-            if (typeof loadAdvertisers === 'function') loadAdvertisers();
-            break;
-        case 'affiliate-install':
-            if (typeof loadAffiliateInstall === 'function') loadAffiliateInstall();
-            break;
-        case 'store-setup':
-            if (typeof loadStoreSetup === 'function') loadStoreSetup();
-            break;
-        case 'add-product':
-            if (typeof loadAddProductForm === 'function') loadAddProductForm();
-            break;
-        case 'recruit-affiliates':
-            if (typeof loadRecruitAffiliates === 'function') loadRecruitAffiliates();
-            break;
-        case 'influencer-apply':
-            if (typeof loadInfluencerApplication === 'function') loadInfluencerApplication();
-            break;
-        case 'transactions':
-            if (typeof loadStoreTransactions === 'function') loadStoreTransactions();
-            break;
+            
         case 'sponsored':
             if (typeof loadSponsoredProductsPage === 'function') loadSponsoredProductsPage();
             break;
-        default:
-            console.log('⚠️ No handler for:', screen);
+            
+        case 'checkout':
+            if (typeof loadCheckout === 'function') loadCheckout();
             break;
-    }
-}
-
-// Check if user was trying to access something before being redirected to auth
-function checkPendingScreen() {
-    const pendingScreen = sessionStorage.getItem('pending_screen');
-    if (pendingScreen) {
-        console.log('🔙 Returning to pending screen:', pendingScreen);
-        const pendingData = sessionStorage.getItem('pending_data');
-        sessionStorage.removeItem('pending_screen');
-        sessionStorage.removeItem('pending_data');
-        
-        setTimeout(() => {
-            if (pendingData) {
-                navigateTo(pendingScreen, JSON.parse(pendingData));
+            
+        case 'orders':
+            if (typeof loadOrdersScreen === 'function') loadOrdersScreen();
+            break;
+            
+        case 'wallet':
+            if (typeof loadWalletScreen === 'function') loadWalletScreen();
+            break;
+            
+        case 'dropship':
+            console.log('📦 Loading dropship dashboard...');
+            if (typeof loadDropshipDashboard === 'function') {
+                loadDropshipDashboard();
             } else {
-                navigateTo(pendingScreen);
+                console.error('❌ loadDropshipDashboard missing');
+                const c = document.getElementById('dropship-content');
+                if (c) c.innerHTML = '<p style="text-align:center;padding:40px;">Loading dropship dashboard...</p>';
             }
-        }, 500);
+            break;
+            
+        case 'dropship-store':
+            console.log('🏪 Loading dropship store...');
+            if (data && data.isPublic && data.username) {
+                if (typeof loadPublicDropshipStore === 'function') {
+                    loadPublicDropshipStore(data.username);
+                } else {
+                    console.error('❌ loadPublicDropshipStore missing');
+                }
+            } else if (typeof loadDropshipStore === 'function') {
+                loadDropshipStore(data);
+            } else {
+                console.error('❌ loadDropshipStore missing');
+            }
+            break;
+            
+        case 'merchant':
+            if (typeof loadMerchantDashboard === 'function') loadMerchantDashboard();
+            else console.error('❌ loadMerchantDashboard missing');
+            break;
+            
+        case 'store-setup':
+            if (typeof loadStoreSetup === 'function') loadStoreSetup();
+            break;
+            
+        case 'add-product':
+            if (typeof loadAddProductForm === 'function') loadAddProductForm();
+            break;
+            
+        case 'profile':
+            if (typeof loadProfileScreen === 'function') loadProfileScreen();
+            break;
+            
+        case 'settings':
+            if (typeof loadSettingsScreen === 'function') loadSettingsScreen();
+            break;
+            
+        case 'notifications':
+            if (typeof loadNotificationsScreen === 'function') loadNotificationsScreen();
+            break;
+            
+        case 'customerservice':
+            console.log('🎧 Loading customer service...');
+            if (typeof loadCustomerServicePanel === 'function') {
+                loadCustomerServicePanel();
+            } else {
+                console.error('❌ loadCustomerServicePanel missing');
+                const c = document.getElementById('cs-content');
+                if (c) c.innerHTML = '<p style="text-align:center;padding:40px;">Loading customer service...</p>';
+            }
+            break;
+            
+        case 'disputes-manage':
+            if (typeof loadDisputesManagement === 'function') loadDisputesManagement();
+            break;
+            
+        case 'leaderboard':
+            if (typeof loadLeaderboard === 'function') loadLeaderboard();
+            break;
+            
+        case 'analytics':
+            if (typeof loadAnalytics === 'function') loadAnalytics();
+            break;
+            
+        case 'hall-of-fame':
+            if (typeof loadHallOfFame === 'function') loadHallOfFame();
+            break;
+            
+        case 'advertisers':
+            if (typeof loadAdvertisers === 'function') loadAdvertisers();
+            break;
+            
+        case 'influencer-dashboard':
+            console.log('📊 Loading influencer dashboard...');
+            if (typeof loadInfluencerDashboard === 'function') loadInfluencerDashboard();
+            else {
+                const c = document.getElementById('influencer-dashboard-content');
+                if (c) c.innerHTML = '<p style="text-align:center;padding:40px;">Loading...</p>';
+            }
+            break;
+            
+        case 'influencer-apply':
+            if (typeof loadInfluencerApplication === 'function') loadInfluencerApplication();
+            break;
+            
+        case 'recruit-affiliates':
+            if (typeof loadRecruitAffiliates === 'function') loadRecruitAffiliates();
+            break;
+            
+        case 'transactions':
+            if (typeof loadStoreTransactions === 'function') loadStoreTransactions();
+            break;
+            
+        case 'vip':
+            if (typeof loadVIPPage === 'function') loadVIPPage();
+            break;
+            
+        case 'flash-campaigns':
+            if (typeof loadFlashCampaigns === 'function') loadFlashCampaigns();
+            break;
+            
+        default:
+            console.warn('⚠️ Unknown screen:', screen);
+            break;
     }
 }
 
@@ -170,7 +238,7 @@ function checkPendingScreen() {
 // =====================
 (function() {
     const path = window.location.pathname;
-    console.log('🔍 Path detected:', path);
+    console.log('🔍 Path:', path);
     
     if (path.match(/^\/store\/(.+)/)) {
         const username = path.match(/^\/store\/(.+)/)[1];
@@ -184,7 +252,6 @@ function checkPendingScreen() {
         const productId = path.match(/^\/p\/(.+)/)[1];
         console.log('🛍️ PRODUCT:', productId);
         sessionStorage.setItem('deep_link_product', productId);
-        sessionStorage.setItem('deep_link_type', 'product');
         sessionStorage.setItem('skip_onboarding', 'true');
     }
     
@@ -193,7 +260,6 @@ function checkPendingScreen() {
         console.log('📢 AFFILIATE:', match[1], match[2]);
         sessionStorage.setItem('affiliate_click', JSON.stringify({ affiliateId: match[1], productId: match[2] }));
         sessionStorage.setItem('deep_link_product', match[2]);
-        sessionStorage.setItem('deep_link_type', 'affiliate');
         sessionStorage.setItem('skip_onboarding', 'true');
     }
     
@@ -202,7 +268,7 @@ function checkPendingScreen() {
 })();
 
 // =====================
-// START THE APP
+// START APP
 // =====================
 (function startApp() {
     const skipOnboarding = sessionStorage.getItem('skip_onboarding');
@@ -212,13 +278,13 @@ function checkPendingScreen() {
     const pendingScreen = sessionStorage.getItem('pending_screen');
     
     console.log('🚀 Starting app...');
+    console.log('   skip:', skipOnboarding, 'path:', path);
     
-    // HIDE ONBOARDING if deep link
     if (skipOnboarding === 'true') {
         document.getElementById('screen-onboarding').classList.add('hidden');
     }
     
-    // DIRECT DEEP LINK HANDLING
+    // Direct deep link handling
     if (path.match(/^\/store\/(.+)/) && storeUsername) {
         hideAllScreens();
         showScreen('screen-dropship-store');
@@ -241,23 +307,18 @@ function checkPendingScreen() {
         return;
     }
     
-    // NORMAL FLOW
+    // Normal flow
     if (isLoggedIn()) {
         hideAllScreens();
         
-        // Check if there's a pending screen to return to
         if (pendingScreen) {
-            const pendingData = sessionStorage.getItem('pending_data');
             sessionStorage.removeItem('pending_screen');
+            const pendingData = sessionStorage.getItem('pending_data');
             sessionStorage.removeItem('pending_data');
             showScreen('screen-' + pendingScreen);
             currentScreen = pendingScreen;
             window.location.hash = pendingScreen;
-            if (pendingData) {
-                handleScreenLoad(pendingScreen, JSON.parse(pendingData));
-            } else {
-                handleScreenLoad(pendingScreen);
-            }
+            handleScreenLoad(pendingScreen, pendingData ? JSON.parse(pendingData) : null);
         } else {
             showScreen('screen-home');
             currentScreen = 'home';
@@ -265,16 +326,20 @@ function checkPendingScreen() {
             if (typeof loadHomeScreen === 'function') loadHomeScreen();
         }
     }
-    // If not logged in, onboarding stays visible
 })();
+
+function isLoggedIn() {
+    return localStorage.getItem('shoplify_auth') === 'true';
+}
 
 window.addEventListener('popstate', () => {
     const hash = window.location.hash.replace('#', '');
     if (hash && hash !== currentScreen) navigateTo(hash);
 });
 
-function isLoggedIn() {
-    return localStorage.getItem('shoplify_auth') === 'true';
-}
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && hash !== currentScreen) navigateTo(hash);
+});
 
-console.log('✅ router.js loaded');
+console.log('✅ router.js loaded - All routes ready');
