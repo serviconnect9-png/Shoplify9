@@ -15,14 +15,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://checkout.flutterwave.com/v3.js"></script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "6d03c893-67b5-4834-bc08-2d5d77802e68",
-    });
-  });
-</script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "6d03c893-67b5-4834-bc08-2d5d77802e68",
+        });
+      });
+    </script>
 </head>
 <body>
 
@@ -56,8 +56,9 @@
                 <p>Sign in to continue</p>
             </div>
             <div class="auth-methods">
-                <button class="btn-google" onclick="signInWithGoogle()">
-                    <span class="google-icon">G</span> Continue with Google
+                <button class="btn-google" onclick="signInWithGoogle()" type="button">
+                    <span class="google-icon"></span>
+                    Continue with Google
                 </button>
                 <div class="divider"><span>or</span></div>
                 <div class="auth-form">
@@ -69,9 +70,12 @@
                         <label>Password</label>
                         <input type="password" id="auth-password" placeholder="Enter password" class="input-field" autocomplete="current-password">
                     </div>
-                    <button class="btn-gold btn-full" onclick="signInWithCredentials()">Sign In</button>
+                    <button class="btn-gold btn-full" onclick="signInWithCredentials()" type="button">Sign In</button>
                 </div>
-                <p class="auth-switch">Don't have an account? <span class="link-text" onclick="navigateTo('account-type')">Create Account</span></p>
+                <p class="auth-switch">
+                    Don't have an account? 
+                    <a href="#" onclick="goToAccountType(); return false;" class="link-text">Create Account</a>
+                </p>
             </div>
         </div>
     </div>
@@ -130,7 +134,7 @@
                     <input type="tel" id="setup-phone" placeholder="Phone number" class="input-field phone-input">
                 </div>
             </div>
-            <button class="btn-gold btn-full" onclick="completeSetup()">Create Account</button>
+            <button class="btn-gold btn-full" onclick="completeSetup()" type="button">Create Account</button>
         </div>
     </div>
 
@@ -485,13 +489,13 @@
 
 </div>
 
-<!-- ==================== SCRIPTS (Root-relative paths for Vercel) ==================== -->
+<!-- ==================== SCRIPTS ==================== -->
 <script src="/countries.js"></script>
 <script src="/config.js"></script>
 <script src="/firebase.js"></script>
 <script src="/utils.js"></script>
-<script src="/auth.js"></script>
 <script src="/router.js"></script>
+<script src="/auth.js"></script>
 <script src="/notifications.js"></script>
 <script src="/home.js"></script>
 <script src="/products.js"></script>
