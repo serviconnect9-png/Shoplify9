@@ -1,5 +1,8 @@
-// profile.js - COMPLETE FINAL VERSION (All subscription applications functional)
+// profile.js - COMPLETE PREMIUM VERSION (All Features, Customer Service, Influencer Application, Wallet Access)
 
+// =====================
+// PROFILE SCREEN
+// =====================
 async function loadProfileScreen() {
     if (!APP.userProfile) return;
     
@@ -32,9 +35,7 @@ async function loadProfileScreen() {
                         <div style="display:flex;justify-content:space-between;align-items:center;">
                             <div>
                                 <strong>📢 Affiliate Active</strong>
-                                <p style="font-size:12px;color:#E65100;margin-top:3px;">
-                                    ⏰ Expires in <strong>${daysLeft} day${daysLeft > 1 ? 's' : ''}</strong>
-                                </p>
+                                <p style="font-size:12px;color:#E65100;margin-top:3px;">⏰ Expires in <strong>${daysLeft} day${daysLeft > 1 ? 's' : ''}</strong></p>
                             </div>
                             <button class="btn-small btn-gold" onclick="renewAffiliateSubscription()">Renew $${APP.affiliatePrice}</button>
                         </div>
@@ -43,59 +44,23 @@ async function loadProfileScreen() {
                 subscriptionHTML += `
                     <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #F44336;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <div>
-                                <strong>📢 Affiliate Expired</strong>
-                                <p style="font-size:12px;color:#C62828;margin-top:3px;">Your subscription has expired</p>
-                            </div>
+                            <div><strong>📢 Affiliate Expired</strong><p style="font-size:12px;color:#C62828;">Expired</p></div>
                             <button class="btn-small btn-gold" onclick="renewAffiliateSubscription()">Renew $${APP.affiliatePrice}</button>
                         </div>
                     </div>`;
             } else {
-                subscriptionHTML += `
-                    <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
-                        <span>📢 <strong>Affiliate Active</strong> - ${daysLeft} days remaining</span>
-                        ${daysLeft <= 10 ? `<button class="btn-small btn-outline" onclick="renewAffiliateSubscription()">Renew</button>` : ''}
-                    </div>`;
+                subscriptionHTML += `<div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;"><span>📢 <strong>Affiliate</strong> - ${daysLeft} days</span>${daysLeft<=10?`<button class="btn-small btn-outline" onclick="renewAffiliateSubscription()">Renew</button>`:''}</div>`;
             }
         }
-    } else if (APP.userProfile.affiliateSubscription === false) {
-        // Was subscribed before but expired
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForAffiliate()">
-                <span class="menu-icon">📢</span> Renew Affiliate Access
-                <span style="margin-left:auto;color:var(--gold-dark);">$${APP.affiliatePrice}/mo</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
     } else {
-        // Never subscribed
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForAffiliate()">
-                <span class="menu-icon">📢</span> Become an Affiliate
-                <span style="margin-left:auto;color:var(--gold-dark);">$${APP.affiliatePrice}/mo</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
+        subscriptionHTML += `<button class="menu-item" onclick="applyForAffiliate()"><span class="menu-icon">📢</span> Become an Affiliate<span style="margin-left:auto;color:var(--gold-dark);">$${APP.affiliatePrice}/mo</span><span class="menu-arrow">›</span></button>`;
     }
     
     // MERCHANT STATUS
     if (APP.userProfile.isMerchant) {
-        subscriptionHTML += `
-            <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">
-                🏪 <strong>Merchant Active</strong> - ${APP.userProfile.merchantSubscription === 'lifetime' ? 'Lifetime Access' : 'Active'}
-            </div>`;
-    } else if (APP.userProfile.merchantSubscription === false) {
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForMerchant()">
-                <span class="menu-icon">🏪</span> Renew Merchant Access
-                <span style="margin-left:auto;color:var(--gold-dark);">$${APP.merchantPrice} lifetime</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
+        subscriptionHTML += `<div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🏪 <strong>Merchant Active</strong> - ${APP.userProfile.merchantSubscription==='lifetime'?'Lifetime':'Active'}</div>`;
     } else {
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForMerchant()">
-                <span class="menu-icon">🏪</span> Become a Merchant
-                <span style="margin-left:auto;color:var(--gold-dark);">$${APP.merchantPrice} lifetime</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
+        subscriptionHTML += `<button class="menu-item" onclick="applyForMerchant()"><span class="menu-icon">🏪</span> Become a Merchant<span style="margin-left:auto;color:var(--gold-dark);">$${APP.merchantPrice} lifetime</span><span class="menu-arrow">›</span></button>`;
     }
     
     // DROPSHIP STATUS
@@ -111,74 +76,41 @@ async function loadProfileScreen() {
                 subscriptionHTML += `
                     <div style="background:#FFF3E0;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #FF9800;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <div>
-                                <strong>📦 ${planName.toUpperCase()} Plan</strong>
-                                <p style="font-size:12px;color:#E65100;margin-top:3px;">
-                                    ⏰ Expires in <strong>${daysLeft} day${daysLeft > 1 ? 's' : ''}</strong>
-                                </p>
-                            </div>
+                            <div><strong>📦 ${planName.toUpperCase()}</strong><p style="font-size:12px;color:#E65100;">⏰ ${daysLeft} day${daysLeft>1?'s':''} left</p></div>
                             <button class="btn-small btn-gold" onclick="renewDropshipPlan()">Renew</button>
                         </div>
                     </div>`;
             } else if (daysLeft <= 0) {
                 subscriptionHTML += `
                     <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #F44336;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <div>
-                                <strong>📦 Dropship Expired</strong>
-                                <p style="font-size:12px;color:#C62828;margin-top:3px;">Your plan has expired</p>
-                            </div>
-                            <button class="btn-small btn-gold" onclick="renewDropshipPlan()">Renew</button>
-                        </div>
+                        <div><strong>📦 Dropship Expired</strong></div>
+                        <button class="btn-small btn-gold" onclick="renewDropshipPlan()">Renew</button>
                     </div>`;
             } else {
-                subscriptionHTML += `
-                    <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
-                        <span>📦 <strong>${planName.toUpperCase()} Plan</strong> - ${daysLeft} days remaining</span>
-                        <div>
-                            ${daysLeft <= 10 ? `<button class="btn-small btn-outline" onclick="renewDropshipPlan()">Renew</button>` : ''}
-                            <button class="btn-small btn-outline" onclick="upgradeDropshipPlan()" style="margin-left:5px;">Upgrade</button>
-                        </div>
-                    </div>`;
+                subscriptionHTML += `<div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;"><span>📦 <strong>${planName.toUpperCase()}</strong> - ${daysLeft} days</span><div>${daysLeft<=10?`<button class="btn-small btn-outline" onclick="renewDropshipPlan()">Renew</button>`:''}<button class="btn-small btn-outline" onclick="upgradeDropshipPlan()" style="margin-left:5px;">Upgrade</button></div></div>`;
             }
         }
-    } else if (APP.userProfile.dropshipPlan && APP.userProfile.dropshipPlan !== 'none') {
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForDropship()">
-                <span class="menu-icon">📦</span> Renew Dropship Plan
-                <span style="margin-left:auto;color:var(--gold-dark);">From $${APP.dropshipStarter}/mo</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
     } else {
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForDropship()">
-                <span class="menu-icon">📦</span> Become a Dropshipper
-                <span style="margin-left:auto;color:var(--gold-dark);">From $${APP.dropshipStarter}/mo</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
+        subscriptionHTML += `<button class="menu-item" onclick="applyForDropship()"><span class="menu-icon">📦</span> Become a Dropshipper<span style="margin-left:auto;color:var(--gold-dark);">From $${APP.dropshipStarter}/mo</span><span class="menu-arrow">›</span></button>`;
     }
     
-    // ADVERTISER/INFLUENCER STATUS
-    if (APP.userProfile.advertiserSubscription) {
-        subscriptionHTML += `
-            <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">
-                🤝 <strong>Influencer Access Active</strong>
-            </div>`;
-    } else {
-        subscriptionHTML += `
-            <button class="menu-item" onclick="applyForAdvertiser()">
-                <span class="menu-icon">🤝</span> Become an Influencer
-                <span style="margin-left:auto;color:var(--gold-dark);">$${APP.advertiserPrice}/mo</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
+    // INFLUENCER STATUS
+    if (APP.userProfile.influencerStatus === 'approved') {
+        subscriptionHTML += `<div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🤝 <strong>Influencer Active</strong>${APP.userProfile.influencerVerified?' ✓ Verified':''}</div>`;
+    } else if (APP.userProfile.influencerStatus === 'pending') {
+        subscriptionHTML += `<div style="background:#FFF8E1;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🤝 <strong>Influencer Application Pending</strong></div>`;
+    } else if (APP.userProfile.influencerStatus === 'suspended') {
+        subscriptionHTML += `<div style="background:#FFEBEE;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🤝 <strong>Influencer Suspended</strong></div>`;
+    } else if (!APP.userProfile.influencerStatus || APP.userProfile.influencerStatus === 'none') {
+        subscriptionHTML += `<button class="menu-item" onclick="applyForInfluencer()"><span class="menu-icon">🤝</span> Apply as Influencer<span class="menu-arrow">›</span></button>`;
     }
     
     container.innerHTML = `
         <div class="profile-header-card">
             <div style="position:relative;display:inline-block;cursor:pointer;" onclick="document.getElementById('profile-pic-upload').click()">
-                <img src="${APP.userProfile.photoURL || APP.currentUser?.photoURL || 'app-icon.png'}" 
+                <img src="${APP.userProfile.photoURL || APP.currentUser?.photoURL || '/app-icon.png'}" 
                      alt="Profile" class="profile-avatar" id="profile-avatar-img"
-                     onerror="this.src='app-icon.png'">
+                     onerror="this.src='/app-icon.png'">
                 <div style="position:absolute;bottom:5px;right:5px;background:var(--gold);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">📷</div>
             </div>
             <input type="file" id="profile-pic-upload" accept="image/*" style="display:none;" onchange="uploadProfilePicture(event)">
@@ -207,6 +139,11 @@ async function loadProfileScreen() {
                 <span class="menu-arrow">›</span>
             </button>
             
+            <button class="menu-item" onclick="navigateTo('customerservice')">
+                <span class="menu-icon">🎧</span> Customer Service
+                <span class="menu-arrow">›</span>
+            </button>
+            
             ${APP.userProfile.isAffiliate ? `
                 <button class="menu-item" onclick="navigateTo('affiliate')">
                     <span class="menu-icon">📢</span> Affiliate Dashboard
@@ -228,9 +165,9 @@ async function loadProfileScreen() {
                 </button>
             ` : ''}
             
-            ${APP.userProfile.advertiserSubscription ? `
-                <button class="menu-item" onclick="navigateTo('advertisers')">
-                    <span class="menu-icon">🤝</span> Influencers
+            ${APP.userProfile.influencerStatus === 'approved' ? `
+                <button class="menu-item" onclick="navigateTo('influencer-dashboard')">
+                    <span class="menu-icon">📊</span> Influencer Dashboard
                     <span class="menu-arrow">›</span>
                 </button>
             ` : ''}
@@ -255,7 +192,7 @@ async function loadProfileScreen() {
             <div style="background:#f5f5f5;padding:12px;border-radius:8px;margin:10px 0;">
                 <small style="color:#666;">Your User ID:</small>
                 <div class="user-id-display">${userId}</div>
-                <small style="color:#999;font-size:11px;">Use for Shoplify Wallet login for withdrawals</small>
+                <small style="color:#999;font-size:11px;">Use for Shoplify Wallet login</small>
             </div>
             
             <button class="menu-item" style="color:var(--red);" onclick="confirmLogout()">
@@ -267,450 +204,62 @@ async function loadProfileScreen() {
 }
 
 // =====================
-// APPLY FOR AFFILIATE
+// INFLUENCER APPLICATION
 // =====================
-function applyForAffiliate() {
-    showModal(`
-        <div style="padding:10px;">
-            <h3>📢 Become an Affiliate</h3>
-            <p style="color:#666;margin:15px 0;">
-                Earn 4-5% commission on every sale you generate by promoting products!
-            </p>
-            
-            <div style="background:#FFF8E1;padding:15px;border-radius:8px;margin-bottom:15px;">
-                <p><strong>💰 Affiliate Plan:</strong> $${APP.affiliatePrice}/month</p>
-                <p style="font-size:13px;">✅ Promote any product on Shoplify</p>
-                <p style="font-size:13px;">✅ Earn 4-5% commission per sale</p>
-                <p style="font-size:13px;">✅ Real-time analytics dashboard</p>
-                <p style="font-size:13px;">✅ Access to influencer marketplace</p>
-                <p style="font-size:13px;">✅ Unique affiliate links for tracking</p>
-            </div>
-            
-            <p style="font-size:13px;color:#666;margin-bottom:15px;">
-                Your wallet balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
-            </p>
-            
-            ${(APP.userProfile?.walletBalance || 0) >= APP.affiliatePrice ? `
-                <button class="btn-gold btn-full" onclick="payAffiliateSubscription()">
-                    💳 Pay $${APP.affiliatePrice} - Activate Now
-                </button>
-            ` : `
-                <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin-bottom:10px;">
-                    <p style="color:#C62828;font-size:13px;">⚠️ Insufficient balance. You need $${APP.affiliatePrice}.</p>
-                </div>
-                <button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">
-                    💰 Deposit Funds First
-                </button>
-            `}
-            
-            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
-        </div>
-    `);
-}
-
-async function payAffiliateSubscription() {
-    hideModal();
-    
-    if ((APP.userProfile?.walletBalance || 0) < APP.affiliatePrice) {
-        showToast(`Insufficient balance. Need $${APP.affiliatePrice}.`, 'error');
-        navigateTo('wallet');
+async function applyForInfluencer() {
+    if (APP.userProfile?.influencerStatus === 'pending') {
+        showToast('Your application is under review', 'info');
+        return;
+    }
+    if (APP.userProfile?.influencerStatus === 'approved') {
+        showToast('You are already an approved influencer', 'info');
+        return;
+    }
+    if (APP.userProfile?.influencerStatus === 'rejected') {
+        showToast('Your application was rejected. You cannot reapply.', 'error');
+        return;
+    }
+    if (APP.userProfile?.influencerStatus === 'suspended') {
+        showToast('Your influencer account is suspended.', 'error');
         return;
     }
     
-    showLoader();
-    
-    try {
-        const userId = APP.userProfile?.uid || APP.currentUser?.uid;
-        const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        
-        await db.collection('users').doc(userId).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-APP.affiliatePrice),
-            isAffiliate: true,
-            affiliateSubscription: true,
-            affiliateSubscriptionExpiry: firebase.firestore.Timestamp.fromDate(thirtyDaysFromNow),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        APP.userProfile.walletBalance -= APP.affiliatePrice;
-        APP.userProfile.isAffiliate = true;
-        APP.userProfile.affiliateSubscription = true;
-        APP.userProfile.affiliateSubscriptionExpiry = thirtyDaysFromNow;
-        
-        await db.collection('transactions').add({
-            userId: userId,
-            type: 'subscription',
-            amount: APP.affiliatePrice,
-            currency: 'USD',
-            status: 'completed',
-            description: 'Affiliate subscription - 30 days',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        await createNotification(userId,
-            'Affiliate Activated! 🎉',
-            'Your affiliate subscription is active! Start promoting products and earning commissions.',
-            '📢',
-            'affiliate'
-        );
-        
-        hideLoader();
-        showToast('Affiliate access activated! 🎉', 'success');
-        loadProfileScreen();
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Affiliate payment error:', error);
-        showToast('Payment failed. Please try again.', 'error');
-    }
-}
-
-async function renewAffiliateSubscription() {
-    if ((APP.userProfile?.walletBalance || 0) < APP.affiliatePrice) {
-        showToast(`Insufficient balance. Need $${APP.affiliatePrice}.`, 'error');
-        navigateTo('wallet');
-        return;
-    }
-    
-    showLoader();
-    
-    try {
-        const userId = APP.userProfile?.uid || APP.currentUser?.uid;
-        const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        
-        await db.collection('users').doc(userId).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-APP.affiliatePrice),
-            affiliateSubscriptionExpiry: firebase.firestore.Timestamp.fromDate(thirtyDaysFromNow),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        APP.userProfile.walletBalance -= APP.affiliatePrice;
-        APP.userProfile.affiliateSubscriptionExpiry = thirtyDaysFromNow;
-        
-        await db.collection('transactions').add({
-            userId: userId,
-            type: 'subscription',
-            amount: APP.affiliatePrice,
-            currency: 'USD',
-            status: 'completed',
-            description: 'Affiliate subscription renewal - 30 days',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        await createNotification(userId,
-            'Subscription Renewed! ✅',
-            'Your affiliate subscription has been renewed for 30 days.',
-            '📢',
-            'affiliate'
-        );
-        
-        hideLoader();
-        showToast('Affiliate subscription renewed! 🎉', 'success');
-        loadProfileScreen();
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Renewal error:', error);
-        showToast('Renewal failed. Try again.', 'error');
-    }
-}
-
-// =====================
-// APPLY FOR MERCHANT
-// =====================
-function applyForMerchant() {
-    showModal(`
-        <div style="padding:10px;">
-            <h3>🏪 Become a Merchant</h3>
-            <p style="color:#666;margin:15px 0;">
-                Create your own online store and sell products to customers worldwide!
-            </p>
-            
-            <div style="background:#FFF8E1;padding:15px;border-radius:8px;margin-bottom:15px;">
-                <p><strong>🏪 Merchant Plan:</strong> $${APP.merchantPrice} (Lifetime Access)</p>
-                <p style="font-size:13px;">✅ Create your online store</p>
-                <p style="font-size:13px;">✅ Upload unlimited products</p>
-                <p style="font-size:13px;">✅ Accept payments via escrow</p>
-                <p style="font-size:13px;">✅ Choose from 4 store templates</p>
-                <p style="font-size:13px;">✅ One-time payment, lifetime access!</p>
-            </div>
-            
-            <p style="font-size:13px;color:#666;margin-bottom:15px;">
-                Your wallet balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
-            </p>
-            
-            ${(APP.userProfile?.walletBalance || 0) >= APP.merchantPrice ? `
-                <button class="btn-gold btn-full" onclick="payMerchantSubscription()">
-                    💳 Pay $${APP.merchantPrice} - Activate Now
-                </button>
-            ` : `
-                <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin-bottom:10px;">
-                    <p style="color:#C62828;font-size:13px;">⚠️ Insufficient balance. You need $${APP.merchantPrice}.</p>
-                </div>
-                <button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">
-                    💰 Deposit Funds First
-                </button>
-            `}
-            
-            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
-        </div>
-    `);
-}
-
-async function payMerchantSubscription() {
-    hideModal();
-    
-    if ((APP.userProfile?.walletBalance || 0) < APP.merchantPrice) {
-        showToast(`Insufficient balance. Need $${APP.merchantPrice}.`, 'error');
-        navigateTo('wallet');
-        return;
-    }
-    
-    showLoader();
-    
-    try {
-        const userId = APP.userProfile?.uid || APP.currentUser?.uid;
-        
-        await db.collection('users').doc(userId).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-APP.merchantPrice),
-            isMerchant: true,
-            merchantSubscription: 'lifetime',
-            storeActive: true,
-            storeName: `${APP.userProfile.username}'s Store`,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        APP.userProfile.walletBalance -= APP.merchantPrice;
-        APP.userProfile.isMerchant = true;
-        APP.userProfile.merchantSubscription = 'lifetime';
-        APP.userProfile.storeActive = true;
-        APP.userProfile.storeName = `${APP.userProfile.username}'s Store`;
-        
-        await db.collection('transactions').add({
-            userId: userId,
-            type: 'subscription',
-            amount: APP.merchantPrice,
-            currency: 'USD',
-            status: 'completed',
-            description: 'Merchant subscription - Lifetime',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        await createNotification(userId,
-            'Store Activated! 🏪',
-            'Your merchant store is ready! Start adding products to sell.',
-            '🏪',
-            'merchant'
-        );
-        
-        hideLoader();
-        showToast('Merchant access activated! 🏪', 'success');
-        loadProfileScreen();
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Merchant payment error:', error);
-        showToast('Payment failed. Please try again.', 'error');
-    }
-}
-
-// =====================
-// APPLY FOR DROPSHIP
-// =====================
-function applyForDropship() {
-    const plans = [
-        { name: 'Starter', price: APP.dropshipStarter, products: 20, stores: 1, color: '#4CAF50' },
-        { name: 'Growth', price: APP.dropshipGrowth, products: 100, stores: 1, color: '#2196F3' },
-        { name: 'Professional', price: APP.dropshipPro, products: 500, stores: 3, color: '#9C27B0' },
-        { name: 'Elite', price: APP.dropshipElite, products: 'Unlimited', stores: 'Unlimited', color: '#FF9800' }
-    ];
-    
+    // Show terms and payment
     showModal(`
         <div style="padding:10px;max-height:70vh;overflow-y:auto;">
-            <h3>📦 Choose Dropship Plan</h3>
-            <p style="color:#666;margin:10px 0;">Resell products without holding inventory</p>
+            <h3>🤝 Apply as Influencer</h3>
             
-            <p style="font-size:13px;color:#666;margin-bottom:10px;">
-                Your wallet balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
-            </p>
-            
-            ${plans.map(plan => `
-                <div class="plan-card" style="border-left:4px solid ${plan.color};margin-bottom:10px;">
-                    <h4>${plan.name}</h4>
-                    <div class="plan-price">$${plan.price}<span style="font-size:14px;">/mo</span></div>
-                    <ul class="plan-features">
-                        <li>📦 ${plan.products} Products</li>
-                        <li>🏪 ${plan.stores} Store${plan.stores !== 1 ? 's' : ''}</li>
-                        <li>💰 Set your own profit margins</li>
-                        <li>🔄 Auto order forwarding</li>
-                    </ul>
-                    ${(APP.userProfile?.walletBalance || 0) >= plan.price ? `
-                        <button class="btn-gold btn-full" onclick="payDropshipSubscription('${plan.name.toLowerCase()}', ${plan.price})">
-                            Select ${plan.name} - $${plan.price}/mo
-                        </button>
-                    ` : `
-                        <button class="btn-outline btn-full" disabled style="opacity:0.5;">
-                            Need $${plan.price} (Balance: ${formatCurrency(APP.userProfile?.walletBalance || 0)})
-                        </button>
-                    `}
-                </div>
-            `).join('')}
-            
-            ${(APP.userProfile?.walletBalance || 0) < APP.dropshipStarter ? `
-                <button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">
-                    💰 Deposit Funds First
-                </button>
-            ` : ''}
-            
-            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
-        </div>
-    `);
-}
-
-async function payDropshipSubscription(plan, price) {
-    hideModal();
-    
-    if ((APP.userProfile?.walletBalance || 0) < price) {
-        showToast(`Insufficient balance. Need $${price}.`, 'error');
-        navigateTo('wallet');
-        return;
-    }
-    
-    showLoader();
-    
-    try {
-        const userId = APP.userProfile?.uid || APP.currentUser?.uid;
-        const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        
-        await db.collection('users').doc(userId).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-price),
-            dropshipPlan: plan,
-            isDropshipper: true,
-            dropshipPlanExpiry: firebase.firestore.Timestamp.fromDate(thirtyDaysFromNow),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        APP.userProfile.walletBalance -= price;
-        APP.userProfile.dropshipPlan = plan;
-        APP.userProfile.isDropshipper = true;
-        APP.userProfile.dropshipPlanExpiry = thirtyDaysFromNow;
-        
-        await db.collection('transactions').add({
-            userId: userId,
-            type: 'subscription',
-            amount: price,
-            currency: 'USD',
-            status: 'completed',
-            description: `Dropship ${plan} plan - 30 days`,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        await createNotification(userId,
-            'Dropship Activated! 📦',
-            `Your ${plan} dropship plan is active! Start importing products.`,
-            '📦',
-            'dropship'
-        );
-        
-        hideLoader();
-        showToast(`${plan} plan activated! 🎉`, 'success');
-        loadProfileScreen();
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Dropship payment error:', error);
-        showToast('Payment failed. Try again.', 'error');
-    }
-}
-
-async function renewDropshipPlan() {
-    const plan = APP.userProfile?.dropshipPlan || 'starter';
-    const prices = {
-        starter: APP.dropshipStarter,
-        growth: APP.dropshipGrowth,
-        pro: APP.dropshipPro,
-        elite: APP.dropshipElite
-    };
-    const price = prices[plan] || APP.dropshipStarter;
-    
-    if ((APP.userProfile?.walletBalance || 0) < price) {
-        showToast(`Insufficient balance. Need $${price}.`, 'error');
-        navigateTo('wallet');
-        return;
-    }
-    
-    showLoader();
-    
-    try {
-        const userId = APP.userProfile?.uid || APP.currentUser?.uid;
-        const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        
-        await db.collection('users').doc(userId).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-price),
-            dropshipPlanExpiry: firebase.firestore.Timestamp.fromDate(thirtyDaysFromNow),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        APP.userProfile.walletBalance -= price;
-        APP.userProfile.dropshipPlanExpiry = thirtyDaysFromNow;
-        
-        await db.collection('transactions').add({
-            userId: userId,
-            type: 'subscription',
-            amount: price,
-            currency: 'USD',
-            status: 'completed',
-            description: `Dropship ${plan} renewal - 30 days`,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        hideLoader();
-        showToast(`${plan} plan renewed! 🎉`, 'success');
-        loadProfileScreen();
-        
-    } catch (error) {
-        hideLoader();
-        showToast('Renewal failed.', 'error');
-    }
-}
-
-function upgradeDropshipPlan() {
-    navigateTo('dropship');
-}
-
-// =====================
-// APPLY FOR ADVERTISER / INFLUENCER
-// =====================
-function applyForAdvertiser() {
-    showModal(`
-        <div style="padding:10px;">
-            <h3>🤝 Become an Influencer</h3>
-            <p style="color:#666;margin:15px 0;">
-                Get listed in the influencer marketplace and connect with affiliates for promotion opportunities!
-            </p>
-            
-            <div style="background:#FFF8E1;padding:15px;border-radius:8px;margin-bottom:15px;">
-                <p><strong>🤝 Influencer Plan:</strong> $${APP.advertiserPrice}/month</p>
-                <p style="font-size:13px;">✅ Get listed in influencer marketplace</p>
-                <p style="font-size:13px;">✅ Connect with affiliates for promotions</p>
-                <p style="font-size:13px;">✅ Showcase your social media handles</p>
-                <p style="font-size:13px;">✅ Receive promotion requests</p>
+            <div style="background:#f5f5f5;padding:15px;border-radius:8px;margin:15px 0;font-size:13px;line-height:1.8;">
+                <p><strong>Influencer Terms:</strong></p>
+                <p>1. Your display name must match your social media accounts</p>
+                <p>2. Must not contact affiliates or dropshippers without permission</p>
+                <p>3. Must deliver promotions as requested</p>
+                <p>4. Your credit score is visible to dropshippers</p>
+                <p>5. 3 reports from dropshippers = 2-week suspension</p>
+                <p>6. 2 suspensions = permanent ban</p>
+                <p>7. You earn 5% commission on every sale through dropshipper campaigns</p>
+                <p>8. Verified influencers earn $1 per sale from Shoplify sponsored products</p>
+                <p>9. Application fee: $1/month (non-refundable)</p>
+                <p>10. Verification takes 2-3 business days</p>
             </div>
             
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:15px;">
+                <input type="checkbox" id="agree-influencer-terms" style="width:18px;height:18px;">
+                <span style="font-size:14px;">I agree to the terms and conditions</span>
+            </label>
+            
             <p style="font-size:13px;color:#666;margin-bottom:15px;">
-                Your wallet balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
+                Application Fee: <strong>$${APP.advertiserPrice}/month</strong><br>
+                Your Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
             </p>
             
             ${(APP.userProfile?.walletBalance || 0) >= APP.advertiserPrice ? `
-                <button class="btn-gold btn-full" onclick="payAdvertiserSubscription()">
-                    💳 Pay $${APP.advertiserPrice} - Activate Now
-                </button>
+                <button class="btn-gold btn-full" onclick="proceedToInfluencerApplication()">💳 Pay $${APP.advertiserPrice} & Apply</button>
             ` : `
                 <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin-bottom:10px;">
                     <p style="color:#C62828;font-size:13px;">⚠️ Insufficient balance. You need $${APP.advertiserPrice}.</p>
                 </div>
-                <button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">
-                    💰 Deposit Funds First
-                </button>
+                <button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">💰 Deposit First</button>
             `}
             
             <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
@@ -718,74 +267,252 @@ function applyForAdvertiser() {
     `);
 }
 
-async function payAdvertiserSubscription() {
+function proceedToInfluencerApplication() {
+    if (!document.getElementById('agree-influencer-terms')?.checked) {
+        showToast('Please agree to the terms', 'error');
+        return;
+    }
     hideModal();
+    navigateTo('influencer-apply');
+}
+
+// =====================
+// INFLUENCER APPLICATION FORM
+// =====================
+function loadInfluencerApplication() {
+    const container = document.getElementById('influencer-apply-content');
+    if (!container) return;
     
-    if ((APP.userProfile?.walletBalance || 0) < APP.advertiserPrice) {
-        showToast(`Insufficient balance. Need $${APP.advertiserPrice}.`, 'error');
-        navigateTo('wallet');
+    // Check status
+    if (APP.userProfile?.influencerStatus === 'approved') {
+        container.innerHTML = `<div style="text-align:center;padding:40px;"><p style="font-size:50px;">✅</p><h3>Approved!</h3></div>`;
+        return;
+    }
+    if (APP.userProfile?.influencerStatus === 'rejected') {
+        container.innerHTML = `<div style="text-align:center;padding:40px;"><p style="font-size:50px;">❌</p><h3>Rejected</h3><p style="color:#666;">Cannot reapply</p></div>`;
         return;
     }
     
-    showLoader();
+    const savedData = APP.userProfile?.influencerDraft || {};
     
+    container.innerHTML = `
+        <div style="padding:20px;">
+            <h3>🤝 Influencer Application</h3>
+            <p style="color:#666;margin-bottom:15px;">Fill in your details</p>
+            
+            <div class="input-group"><label>Full Name (must match social media)</label><input type="text" id="inf-name" class="input-field" value="${savedData.name || APP.userProfile.displayName || ''}"></div>
+            <div class="input-group"><label>Niche/Category</label><input type="text" id="inf-niche" class="input-field" value="${savedData.niche || ''}" placeholder="e.g. Fashion, Tech, Beauty"></div>
+            <div class="input-group"><label>Bio</label><textarea id="inf-bio" class="input-field" rows="3">${savedData.bio || ''}</textarea></div>
+            <div class="input-group"><label>Phone for WhatsApp Contact</label><input type="tel" id="inf-phone" class="input-field" value="${savedData.phone || APP.userProfile.phoneNumber || ''}"></div>
+            
+            <div class="input-group"><label>Select Social Media Platforms</label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                    ${APP.socialPlatforms.map(p => `
+                        <div onclick="toggleInfluencerPlatform('${p.id}')" id="inf-platform-${p.id}"
+                             style="padding:12px 16px;border:2px solid ${savedData.platforms?.includes(p.id)?'#FFD700':'#e0e0e0'};border-radius:12px;cursor:pointer;text-align:center;background:${savedData.platforms?.includes(p.id)?'#FFFDE7':'white'};min-width:80px;">
+                            <div style="font-size:28px;">${p.icon}</div>
+                            <div style="font-size:11px;font-weight:600;">${p.name}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <div class="input-group"><label>Upload Screenshot of Social Media Profile</label><input type="file" id="inf-screenshot" class="input-field" accept="image/*" onchange="previewInfluencerScreenshot()"><div id="inf-screenshot-preview" style="margin-top:8px;">${savedData.screenshotUrl?`<img src="${savedData.screenshotUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;">`:''}</div></div>
+            
+            <button class="btn-gold btn-full" onclick="submitInfluencerApplication()">Submit Application</button>
+            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="saveInfluencerDraft()">💾 Save Draft</button>
+        </div>
+    `;
+    
+    window._influencerPlatforms = savedData.platforms || [];
+}
+
+function toggleInfluencerPlatform(platformId) {
+    if (!window._influencerPlatforms) window._influencerPlatforms = [];
+    const index = window._influencerPlatforms.indexOf(platformId);
+    if (index >= 0) { window._influencerPlatforms.splice(index, 1); }
+    else { window._influencerPlatforms.push(platformId); }
+    
+    const el = document.getElementById('inf-platform-' + platformId);
+    if (el) {
+        const isSelected = window._influencerPlatforms.includes(platformId);
+        el.style.borderColor = isSelected ? '#FFD700' : '#e0e0e0';
+        el.style.background = isSelected ? '#FFFDE7' : 'white';
+    }
+}
+
+function previewInfluencerScreenshot() {
+    const file = document.getElementById('inf-screenshot')?.files?.[0];
+    const container = document.getElementById('inf-screenshot-preview');
+    if (!container || !file) return;
+    window._influencerScreenshot = file;
+    const reader = new FileReader();
+    reader.onload = e => { container.innerHTML = `<img src="${e.target.result}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;">`; };
+    reader.readAsDataURL(file);
+}
+
+async function submitInfluencerApplication() {
+    const name = document.getElementById('inf-name')?.value?.trim();
+    const niche = document.getElementById('inf-niche')?.value?.trim();
+    const bio = document.getElementById('inf-bio')?.value?.trim();
+    const phone = document.getElementById('inf-phone')?.value?.trim();
+    const platforms = window._influencerPlatforms || [];
+    
+    if (!name) { showToast('Enter your full name', 'error'); return; }
+    if (!phone) { showToast('Enter phone number', 'error'); return; }
+    if (platforms.length === 0) { showToast('Select at least one platform', 'error'); return; }
+    if ((APP.userProfile?.walletBalance || 0) < APP.advertiserPrice) { showToast('Insufficient balance', 'error'); navigateTo('wallet'); return; }
+    
+    showLoader();
     try {
-        const userId = APP.userProfile?.uid || APP.currentUser?.uid;
-        const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        let screenshotUrl = APP.userProfile?.influencerDraft?.screenshotUrl || '';
+        if (window._influencerScreenshot) { screenshotUrl = await uploadToCloudinary(window._influencerScreenshot); }
         
-        await db.collection('users').doc(userId).update({
+        await db.collection('users').doc(APP.userProfile.uid).update({
             walletBalance: firebase.firestore.FieldValue.increment(-APP.advertiserPrice),
-            advertiserSubscription: true,
-            advertiserSubscriptionExpiry: firebase.firestore.Timestamp.fromDate(thirtyDaysFromNow),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            influencerStatus: 'pending',
+            influencerName: name, influencerNiche: niche, influencerBio: bio,
+            influencerPhone: phone, influencerPlatforms: platforms,
+            influencerScreenshot: screenshotUrl,
+            influencerReports: 0, influencerSuspensions: 0,
+            influencerAppliedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            influencerDraft: null
         });
         
         APP.userProfile.walletBalance -= APP.advertiserPrice;
-        APP.userProfile.advertiserSubscription = true;
-        APP.userProfile.advertiserSubscriptionExpiry = thirtyDaysFromNow;
+        APP.userProfile.influencerStatus = 'pending';
         
         await db.collection('transactions').add({
-            userId: userId,
-            type: 'subscription',
-            amount: APP.advertiserPrice,
-            currency: 'USD',
-            status: 'completed',
-            description: 'Influencer subscription - 30 days',
+            userId: APP.userProfile.uid, type: 'subscription', amount: APP.advertiserPrice,
+            currency: 'USD', status: 'completed', description: 'Influencer application',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        // Add to advertisers collection
-        await db.collection('advertisers').add({
-            userId: userId,
-            name: APP.userProfile.displayName || APP.userProfile.username,
-            photoURL: APP.userProfile.photoURL || '',
-            rating: 0,
-            platform: 'Shoplify',
-            handle: '@' + APP.userProfile.username,
-            whatsappLink: '',
-            description: 'Influencer on Shoplify',
-            status: 'active',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        await createNotification(userId,
-            'Influencer Access Activated! 🤝',
-            'You are now listed in the influencer marketplace! Update your profile in settings.',
-            '🤝',
-            'advertisers'
-        );
+        if (typeof createNotification === 'function') {
+            await createNotification('admin', 'New Influencer Application', `${name} applied as influencer.`, '🤝', 'customerservice');
+        }
         
         hideLoader();
-        showToast('Influencer access activated! 🤝', 'success');
-        loadProfileScreen();
-        navigateTo('advertisers');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Advertiser payment error:', error);
-        showToast('Payment failed. Try again.', 'error');
-    }
+        showToast('Application submitted! Review takes 2-3 days. ✅', 'success');
+        navigateTo('profile');
+    } catch (e) { hideLoader(); showToast('Failed', 'error'); }
 }
+
+async function saveInfluencerDraft() {
+    const name = document.getElementById('inf-name')?.value?.trim();
+    const niche = document.getElementById('inf-niche')?.value?.trim();
+    const bio = document.getElementById('inf-bio')?.value?.trim();
+    const phone = document.getElementById('inf-phone')?.value?.trim();
+    const platforms = window._influencerPlatforms || [];
+    try {
+        await db.collection('users').doc(APP.userProfile.uid).update({
+            influencerDraft: { name, niche, bio, phone, platforms }
+        });
+        showToast('Draft saved! ✅', 'success');
+    } catch (e) { showToast('Failed', 'error'); }
+}
+
+// =====================
+// SUBSCRIPTION FUNCTIONS
+// =====================
+function applyForAffiliate() {
+    showModal(`
+        <div style="padding:10px;"><h3>📢 Become an Affiliate</h3>
+        <p style="color:#666;margin:15px 0;">Earn 4-5% commission on every sale!</p>
+        <div style="background:#FFF8E1;padding:15px;border-radius:8px;margin-bottom:15px;">
+            <p><strong>$${APP.affiliatePrice}/month</strong></p>
+            <p style="font-size:13px;">• Promote products • Earn commissions</p>
+        </div>
+        <p>Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance||0)}</strong></p>
+        ${(APP.userProfile?.walletBalance||0)>=APP.affiliatePrice?`<button class="btn-gold btn-full" onclick="payAffiliateSubscription()">Pay $${APP.affiliatePrice}</button>`:`<p style="color:#f44;">Insufficient balance</p><button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">Deposit</button>`}
+        <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button></div>`);
+}
+
+function applyForMerchant() {
+    showModal(`
+        <div style="padding:10px;"><h3>🏪 Become a Merchant</h3>
+        <p style="color:#666;margin:15px 0;">Create your store and sell worldwide!</p>
+        <div style="background:#FFF8E1;padding:15px;border-radius:8px;margin-bottom:15px;">
+            <p><strong>$${APP.merchantPrice} Lifetime</strong></p>
+            <p style="font-size:13px;">• Online store • Unlimited products</p>
+        </div>
+        <p>Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance||0)}</strong></p>
+        ${(APP.userProfile?.walletBalance||0)>=APP.merchantPrice?`<button class="btn-gold btn-full" onclick="payMerchantSubscription()">Pay $${APP.merchantPrice}</button>`:`<p style="color:#f44;">Insufficient balance</p><button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">Deposit</button>`}
+        <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button></div>`);
+}
+
+function applyForDropship() {
+    const plans = [{name:'Starter',price:APP.dropshipStarter,color:'#4CAF50'},{name:'Growth',price:APP.dropshipGrowth,color:'#2196F3'},{name:'Professional',price:APP.dropshipPro,color:'#9C27B0'},{name:'Elite',price:APP.dropshipElite,color:'#FF9800'}];
+    showModal(`
+        <div style="padding:10px;max-height:70vh;overflow-y:auto;"><h3>📦 Choose Plan</h3>
+        <p>Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance||0)}</strong></p>
+        ${plans.map(p=>`<div class="plan-card" style="border-left:4px solid ${p.color};margin:10px 0;"><h4>${p.name}</h4><div class="plan-price">$${p.price}/mo</div>${(APP.userProfile?.walletBalance||0)>=p.price?`<button class="btn-gold btn-full" onclick="payDropshipSubscription('${p.name.toLowerCase()}',${p.price})">Select</button>`:`<button class="btn-outline btn-full" disabled>Need $${p.price}</button>`}</div>`).join('')}
+        <button class="btn-outline btn-full" onclick="hideModal()">Cancel</button></div>`);
+}
+
+async function payAffiliateSubscription() {
+    hideModal();
+    if((APP.userProfile?.walletBalance||0)<APP.affiliatePrice){showToast('Insufficient balance','error');navigateTo('wallet');return;}
+    showLoader();
+    try {
+        const d=new Date(Date.now()+30*24*60*60*1000);
+        await db.collection('users').doc(APP.userProfile.uid).update({walletBalance:firebase.firestore.FieldValue.increment(-APP.affiliatePrice),isAffiliate:true,affiliateSubscription:true,affiliateSubscriptionExpiry:firebase.firestore.Timestamp.fromDate(d)});
+        APP.userProfile.walletBalance-=APP.affiliatePrice;APP.userProfile.isAffiliate=true;APP.userProfile.affiliateSubscription=true;
+        await db.collection('transactions').add({userId:APP.userProfile.uid,type:'subscription',amount:APP.affiliatePrice,currency:'USD',status:'completed',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        hideLoader();showToast('Affiliate activated! 🎉','success');navigateTo('affiliate');
+    }catch(e){hideLoader();showToast('Failed','error');}
+}
+
+async function payMerchantSubscription() {
+    hideModal();
+    if((APP.userProfile?.walletBalance||0)<APP.merchantPrice){showToast('Insufficient balance','error');navigateTo('wallet');return;}
+    showLoader();
+    try {
+        await db.collection('users').doc(APP.userProfile.uid).update({walletBalance:firebase.firestore.FieldValue.increment(-APP.merchantPrice),isMerchant:true,merchantSubscription:'lifetime',storeActive:true,storeName:`${APP.userProfile.username}'s Store`});
+        APP.userProfile.walletBalance-=APP.merchantPrice;APP.userProfile.isMerchant=true;
+        await db.collection('transactions').add({userId:APP.userProfile.uid,type:'subscription',amount:APP.merchantPrice,currency:'USD',status:'completed',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        hideLoader();showToast('Merchant activated! 🏪','success');navigateTo('merchant');
+    }catch(e){hideLoader();showToast('Failed','error');}
+}
+
+async function payDropshipSubscription(plan,price) {
+    hideModal();
+    if((APP.userProfile?.walletBalance||0)<price){showToast('Insufficient balance','error');navigateTo('wallet');return;}
+    showLoader();
+    try {
+        const d=new Date(Date.now()+30*24*60*60*1000);
+        await db.collection('users').doc(APP.userProfile.uid).update({walletBalance:firebase.firestore.FieldValue.increment(-price),dropshipPlan:plan,isDropshipper:true,dropshipPlanExpiry:firebase.firestore.Timestamp.fromDate(d)});
+        APP.userProfile.walletBalance-=price;APP.userProfile.dropshipPlan=plan;APP.userProfile.isDropshipper=true;
+        await db.collection('transactions').add({userId:APP.userProfile.uid,type:'subscription',amount:price,currency:'USD',status:'completed',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        hideLoader();showToast(`Subscribed to ${plan}! 🎉`,'success');navigateTo('dropship');
+    }catch(e){hideLoader();showToast('Failed','error');}
+}
+
+async function renewAffiliateSubscription() {
+    if((APP.userProfile?.walletBalance||0)<APP.affiliatePrice){showToast('Insufficient balance','error');navigateTo('wallet');return;}
+    showLoader();
+    try {
+        const d=new Date(Date.now()+30*24*60*60*1000);
+        await db.collection('users').doc(APP.userProfile.uid).update({walletBalance:firebase.firestore.FieldValue.increment(-APP.affiliatePrice),affiliateSubscriptionExpiry:firebase.firestore.Timestamp.fromDate(d)});
+        APP.userProfile.walletBalance-=APP.affiliatePrice;
+        hideLoader();showToast('Renewed! 🎉','success');loadProfileScreen();
+    }catch(e){hideLoader();showToast('Failed','error');}
+}
+
+async function renewDropshipPlan() {
+    const prices={starter:APP.dropshipStarter,growth:APP.dropshipGrowth,pro:APP.dropshipPro,elite:APP.dropshipElite};
+    const price=prices[APP.userProfile?.dropshipPlan]||APP.dropshipStarter;
+    if((APP.userProfile?.walletBalance||0)<price){showToast('Insufficient balance','error');navigateTo('wallet');return;}
+    showLoader();
+    try {
+        const d=new Date(Date.now()+30*24*60*60*1000);
+        await db.collection('users').doc(APP.userProfile.uid).update({walletBalance:firebase.firestore.FieldValue.increment(-price),dropshipPlanExpiry:firebase.firestore.Timestamp.fromDate(d)});
+        APP.userProfile.walletBalance-=price;
+        hideLoader();showToast('Renewed! 🎉','success');loadProfileScreen();
+    }catch(e){hideLoader();showToast('Failed','error');}
+}
+
+function upgradeDropshipPlan(){navigateTo('dropship');}
 
 // =====================
 // PROFILE PICTURE UPLOAD
@@ -793,38 +520,16 @@ async function payAdvertiserSubscription() {
 async function uploadProfilePicture(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('Image too large. Max 5MB.', 'error');
-        return;
-    }
-    
+    if (file.size > 5*1024*1024) { showToast('Max 5MB', 'error'); return; }
     showLoader();
-    
     try {
-        const imageUrl = await uploadToCloudinary(file);
-        
-        await db.collection('users').doc(APP.userProfile.uid).update({
-            photoURL: imageUrl,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        APP.userProfile.photoURL = imageUrl;
-        
-        const avatarImg = document.getElementById('profile-avatar-img');
-        if (avatarImg) avatarImg.src = imageUrl;
-        
-        const headerAvatar = document.getElementById('header-avatar');
-        if (headerAvatar) headerAvatar.src = imageUrl;
-        
-        hideLoader();
-        showToast('Profile picture updated! 📷', 'success');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Upload error:', error);
-        showToast('Failed to upload image. Try again.', 'error');
-    }
+        const url = await uploadToCloudinary(file);
+        await db.collection('users').doc(APP.userProfile.uid).update({ photoURL: url });
+        APP.userProfile.photoURL = url;
+        document.getElementById('profile-avatar-img').src = url;
+        const hdr = document.getElementById('header-avatar'); if (hdr) hdr.src = url;
+        hideLoader(); showToast('Updated! 📷', 'success');
+    } catch (e) { hideLoader(); showToast('Failed', 'error'); }
 }
 
 // =====================
@@ -835,330 +540,66 @@ async function loadSettingsScreen() {
     if (!container || !APP.userProfile) return;
     
     const countryOptions = typeof COUNTRIES !== 'undefined' ? 
-        Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name))
-            .map(([code, data]) => `<option value="${code}" ${APP.userProfile.country === code ? 'selected' : ''}>${data.flag || ''} ${data.name}</option>`).join('') : '';
+        Object.entries(COUNTRIES).sort((a,b) => a[1].name.localeCompare(b[1].name))
+            .map(([code, data]) => `<option value="${code}" ${APP.userProfile.country===code?'selected':''}>${data.flag||''} ${data.name}</option>`).join('') : '';
     
     container.innerHTML = `
         <div style="padding:20px;">
-            <h3>👤 Account Information</h3>
+            <h3>👤 Account</h3>
+            <div class="input-group"><label>Username</label><input type="text" id="settings-username" class="input-field" value="${APP.userProfile.username||''}"></div>
+            <div class="input-group"><label>Display Name</label><input type="text" id="settings-displayname" class="input-field" value="${APP.userProfile.displayName||''}"></div>
+            <div class="input-group"><label>Phone</label><div class="phone-input-wrapper"><span class="country-code-display" id="settings-country-code">${COUNTRIES?.[APP.userProfile.country]?.code||'+1'}</span><input type="tel" id="settings-phone" class="input-field phone-input" value="${(APP.userProfile.phoneNumber||'').replace(COUNTRIES?.[APP.userProfile.country]?.code||'+1','')}"></div></div>
+            <div class="input-group"><label>Country</label><select id="settings-country" class="input-field" onchange="updateSettingsCountryCode()">${countryOptions}</select></div>
+            <div class="input-group"><label>New Password</label><input type="password" id="settings-password" class="input-field" placeholder="Leave blank"></div>
+            <button class="btn-gold btn-full" style="margin-top:15px;" onclick="saveSettings()">💾 Save</button>
             
-            <div class="input-group" style="margin-top:15px;">
-                <label>Username</label>
-                <input type="text" id="settings-username" class="input-field" value="${APP.userProfile.username || ''}" placeholder="Username">
-                <small style="color:#999;">3-30 lowercase letters/numbers</small>
-            </div>
+            <h3 style="margin-top:25px;">🎨 Appearance</h3>
+            <div class="setting-item"><span>Theme</span><div><button class="theme-btn ${APP.userProfile.theme==='light'?'active':''}" onclick="setThemeSetting('light')">☀️</button><button class="theme-btn ${APP.userProfile.theme==='dark'?'active':''}" onclick="setThemeSetting('dark')">🌙</button></div></div>
             
-            <div class="input-group" style="margin-top:15px;">
-                <label>Display Name</label>
-                <input type="text" id="settings-displayname" class="input-field" value="${APP.userProfile.displayName || ''}" placeholder="Display name">
-            </div>
-            
-            <div class="input-group" style="margin-top:15px;">
-                <label>Email</label>
-                <input type="email" id="settings-email" class="input-field" value="${APP.userProfile.email || ''}" placeholder="Email">
-            </div>
-            
-            <div class="input-group" style="margin-top:15px;">
-                <label>Phone Number</label>
-                <div class="phone-input-wrapper">
-                    <span class="country-code-display" id="settings-country-code">${COUNTRIES?.[APP.userProfile.country]?.code || '+1'}</span>
-                    <input type="tel" id="settings-phone" class="input-field phone-input" 
-                           value="${(APP.userProfile.phoneNumber || '').replace(COUNTRIES?.[APP.userProfile.country]?.code || '+1', '')}" 
-                           placeholder="Phone number">
-                </div>
-                <small style="color:#f44;">Required for deposits</small>
-            </div>
-            
-            <div class="input-group" style="margin-top:15px;">
-                <label>Country</label>
-                <select id="settings-country" class="input-field" onchange="updateSettingsCountryCode()">
-                    <option value="">Select Country</option>
-                    ${countryOptions}
-                </select>
-            </div>
-            
-            <div class="input-group" style="margin-top:15px;">
-                <label>New Password (leave blank to keep current)</label>
-                <input type="password" id="settings-password" class="input-field" placeholder="New password (min 6 characters)">
-            </div>
-            
-            <button class="btn-gold btn-full" style="margin-top:20px;" onclick="saveSettings()">
-                💾 Save Changes
-            </button>
-            
-            <div class="settings-section" style="margin-top:25px;">
-                <h3>🎨 Appearance</h3>
-                <div class="setting-item">
-                    <span>Theme</span>
-                    <div class="theme-toggle">
-                        <button class="theme-btn ${APP.userProfile.theme === 'light' ? 'active' : ''}" 
-                                onclick="setThemeSetting('light')">☀️ Light</button>
-                        <button class="theme-btn ${APP.userProfile.theme === 'dark' ? 'active' : ''}" 
-                                onclick="setThemeSetting('dark')">🌙 Dark</button>
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <span>Text Size</span>
-                    <div class="text-size-controls">
-                        <button class="theme-btn ${APP.userProfile.textSize === 'small' ? 'active' : ''}" 
-                                onclick="setTextSizeSetting('small')">S</button>
-                        <button class="theme-btn ${APP.userProfile.textSize === 'medium' ? 'active' : ''}" 
-                                onclick="setTextSizeSetting('medium')">M</button>
-                        <button class="theme-btn ${APP.userProfile.textSize === 'large' ? 'active' : ''}" 
-                                onclick="setTextSizeSetting('large')">L</button>
-                    </div>
-                </div>
-            </div>
-            
-            ${APP.userProfile.advertiserSubscription ? `
-                <div class="settings-section" style="margin-top:25px;">
-                    <h3>🤝 Influencer Profile</h3>
-                    <div class="input-group" style="margin-top:10px;">
-                        <label>Platform</label>
-                        <input type="text" id="advertiser-platform" class="input-field" value="${APP.userProfile.advertiserPlatform || 'Shoplify'}" placeholder="e.g. Instagram, TikTok">
-                    </div>
-                    <div class="input-group" style="margin-top:10px;">
-                        <label>Handle</label>
-                        <input type="text" id="advertiser-handle" class="input-field" value="${APP.userProfile.advertiserHandle || '@' + APP.userProfile.username}" placeholder="@yourhandle">
-                    </div>
-                    <div class="input-group" style="margin-top:10px;">
-                        <label>WhatsApp Link</label>
-                        <input type="url" id="advertiser-whatsapp" class="input-field" value="${APP.userProfile.advertiserWhatsapp || ''}" placeholder="https://wa.me/...">
-                    </div>
-                    <div class="input-group" style="margin-top:10px;">
-                        <label>Description</label>
-                        <textarea id="advertiser-description" class="input-field" rows="2">${APP.userProfile.advertiserDescription || 'Influencer on Shoplify'}</textarea>
-                    </div>
-                    <button class="btn-gold btn-full" style="margin-top:15px;" onclick="saveAdvertiserProfile()">💾 Save Influencer Profile</button>
-                </div>
-            ` : ''}
-            
-            <div class="settings-section" style="margin-top:25px;">
-                <h3>✅ Verification</h3>
-                ${APP.userProfile.isAppVerified ? `
-                    <div style="background:#E8F5E9;padding:15px;border-radius:8px;text-align:center;">
-                        <p style="font-size:30px;">✅</p>
-                        <p style="font-weight:600;">You are App Verified</p>
-                    </div>
-                ` : APP.userProfile.appVerificationApplied ? `
-                    <div style="background:#FFF8E1;padding:15px;border-radius:8px;text-align:center;">
-                        <p>⏳ Verification in progress...</p>
-                    </div>
-                ` : `
-                    <p style="color:#666;margin-bottom:15px;">
-                        Requirements: ${APP.verifyMinSales} sales, ${APP.verifyMinReferrals} referrals, $${APP.verifyMinEarnings} earned
-                    </p>
-                    <div class="input-group" style="margin-top:10px;">
-                        <label>Full Legal Name</label>
-                        <input type="text" id="verify-name" class="input-field" placeholder="Enter your full name">
-                    </div>
-                    <div class="input-group" style="margin-top:10px;">
-                        <label>Date of Birth</label>
-                        <input type="date" id="verify-dob" class="input-field">
-                    </div>
-                    <button class="btn-outline btn-full" style="margin-top:15px;" onclick="applyForVerification()">Apply for Verification</button>
-                `}
-            </div>
-            
-            <div class="settings-section" style="margin-top:25px;">
-                <h3>ℹ️ About</h3>
-                <p style="color:#666;">Shoplify Enterprise v${APP.version}</p>
-                <p style="color:#666;">Powered by Rev</p>
-                <p style="color:#666;font-size:13px;">All transactions protected by escrow</p>
-            </div>
-        </div>
-    `;
+            <h3 style="margin-top:25px;">ℹ️ About</h3>
+            <p style="color:#666;">ONESHOPLIFY Enterprise v${APP.version}</p>
+        </div>`;
 }
 
 function updateSettingsCountryCode() {
-    const country = document.getElementById('settings-country')?.value;
-    const display = document.getElementById('settings-country-code');
-    if (display && country && COUNTRIES?.[country]) {
-        display.textContent = COUNTRIES[country].code || '+1';
-    }
+    const c = document.getElementById('settings-country')?.value;
+    const d = document.getElementById('settings-country-code');
+    if (d && c && COUNTRIES?.[c]) d.textContent = COUNTRIES[c].code || '+1';
 }
 
 async function saveSettings() {
     const username = document.getElementById('settings-username')?.value?.trim()?.toLowerCase();
     const displayName = document.getElementById('settings-displayname')?.value?.trim();
-    const email = document.getElementById('settings-email')?.value?.trim();
     const phone = document.getElementById('settings-phone')?.value?.trim();
     const country = document.getElementById('settings-country')?.value;
     const password = document.getElementById('settings-password')?.value;
-    
-    if (username && !/^[a-z0-9]{3,30}$/.test(username)) {
-        showToast('Username: 3-30 lowercase letters/numbers only', 'error');
-        return;
-    }
-    
-    if (username && username !== APP.userProfile.username) {
-        try {
-            const check = await db.collection('users').where('username', '==', username).limit(1).get();
-            if (!check.empty) {
-                showToast('Username already taken', 'error');
-                return;
-            }
-        } catch (error) {
-            showToast('Could not verify username', 'error');
-            return;
-        }
-    }
-    
+    if (username && !/^[a-z0-9]{3,30}$/.test(username)) { showToast('Invalid username', 'error'); return; }
     showLoader();
-    
     try {
         const updates = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-        
         if (username) updates.username = username;
         if (displayName) updates.displayName = displayName;
-        if (email) updates.email = email;
-        if (country && COUNTRIES?.[country]) {
-            updates.country = country;
-            updates.countryFlag = COUNTRIES[country].flag || '';
-            updates.currency = COUNTRIES[country].currency || 'USD';
-            updates.exchangeRate = APP.exchangeRates[(COUNTRIES[country].currency || 'usd').toLowerCase()] || 1;
-        }
-        if (phone) {
-            const code = COUNTRIES?.[country || APP.userProfile.country]?.code || '+1';
-            updates.phoneNumber = code + phone;
-        }
-        if (password && password.length >= 6) {
-            updates.password = password;
-        }
-        
+        if (country && COUNTRIES?.[country]) { updates.country = country; updates.countryFlag = COUNTRIES[country].flag; updates.currency = COUNTRIES[country].currency || 'USD'; }
+        if (phone) updates.phoneNumber = (COUNTRIES?.[country||APP.userProfile.country]?.code||'+1') + phone;
+        if (password && password.length >= 6) updates.password = password;
         await db.collection('users').doc(APP.userProfile.uid).update(updates);
         Object.assign(APP.userProfile, updates);
-        
-        hideLoader();
-        showToast('Settings saved! ✅', 'success');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Settings error:', error);
-        showToast('Failed to save settings', 'error');
-    }
-}
-
-async function saveAdvertiserProfile() {
-    const platform = document.getElementById('advertiser-platform')?.value?.trim();
-    const handle = document.getElementById('advertiser-handle')?.value?.trim();
-    const whatsapp = document.getElementById('advertiser-whatsapp')?.value?.trim();
-    const description = document.getElementById('advertiser-description')?.value?.trim();
-    
-    showLoader();
-    
-    try {
-        const updates = {
-            advertiserPlatform: platform,
-            advertiserHandle: handle,
-            advertiserWhatsapp: whatsapp,
-            advertiserDescription: description,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await db.collection('users').doc(APP.userProfile.uid).update(updates);
-        Object.assign(APP.userProfile, updates);
-        
-        // Update advertisers collection
-        const snap = await db.collection('advertisers').where('userId', '==', APP.userProfile.uid).limit(1).get();
-        if (!snap.empty) {
-            await snap.docs[0].ref.update({
-                platform: platform || 'Shoplify',
-                handle: handle || '@' + APP.userProfile.username,
-                whatsappLink: whatsapp || '',
-                description: description || 'Influencer on Shoplify',
-                photoURL: APP.userProfile.photoURL || '',
-                name: APP.userProfile.displayName || APP.userProfile.username
-            });
-        }
-        
-        hideLoader();
-        showToast('Influencer profile saved! ✅', 'success');
-        
-    } catch (error) {
-        hideLoader();
-        console.error('Save advertiser error:', error);
-        showToast('Failed to save', 'error');
-    }
+        hideLoader(); showToast('Saved! ✅', 'success');
+    } catch (e) { hideLoader(); showToast('Failed', 'error'); }
 }
 
 function setThemeSetting(theme) {
     APP.userProfile.theme = theme;
     document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.theme-btn').forEach(b => {
-        if (b.textContent.includes(theme === 'light' ? 'Light' : 'Dark')) b.classList.add('active');
-    });
+    document.querySelectorAll('.theme-btn').forEach(b => { if (b.textContent.includes(theme==='light'?'☀️':'🌙')) b.classList.add('active'); });
     document.body.classList.toggle('dark-theme', theme === 'dark');
     db.collection('users').doc(APP.userProfile.uid).update({ theme }).catch(() => {});
 }
 
-function setTextSizeSetting(size) {
-    APP.userProfile.textSize = size;
-    document.querySelectorAll('.text-size-controls .theme-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.text-size-controls .theme-btn').forEach(b => {
-        if (b.textContent === size.toUpperCase().substring(0, 1)) b.classList.add('active');
-    });
-    const sizes = { small: '14px', medium: '16px', large: '18px' };
-    document.body.style.fontSize = sizes[size];
-    db.collection('users').doc(APP.userProfile.uid).update({ textSize: size }).catch(() => {});
-}
-
-async function applyForVerification() {
-    const name = document.getElementById('verify-name')?.value?.trim();
-    const dob = document.getElementById('verify-dob')?.value;
-    
-    if (!name || !dob) { showToast('Please fill in all fields', 'error'); return; }
-    
-    const sales = APP.userProfile.totalSales || 0;
-    const referrals = APP.userProfile.totalReferrals || 0;
-    const earnings = (APP.userProfile.affiliateEarnings || 0) + (APP.userProfile.totalRevenue || 0);
-    
-    if (sales < APP.verifyMinSales) {
-        showToast(`You need ${APP.verifyMinSales} sales (you have ${sales})`, 'error');
-        return;
-    }
-    if (referrals < APP.verifyMinReferrals) {
-        showToast(`You need ${APP.verifyMinReferrals} referrals (you have ${referrals})`, 'error');
-        return;
-    }
-    if (earnings < APP.verifyMinEarnings) {
-        showToast(`You need $${APP.verifyMinEarnings} earned (you have $${earnings.toFixed(2)})`, 'error');
-        return;
-    }
-    
-    try {
-        await db.collection('verification_requests').add({
-            userId: APP.userProfile.uid,
-            name, dob, sales, referrals, earnings,
-            status: 'pending',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        await db.collection('users').doc(APP.userProfile.uid).update({
-            appVerificationApplied: true
-        });
-        
-        APP.userProfile.appVerificationApplied = true;
-        showToast('Verification application submitted! ✅', 'success');
-        loadSettingsScreen();
-        
-    } catch (error) {
-        showToast('Failed to submit. Try again.', 'error');
-    }
-}
-
 function confirmLogout() {
-    showModal(`
-        <h3>Logout</h3>
-        <p>Are you sure you want to logout?</p>
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn-outline" style="flex:1;" onclick="hideModal()">Cancel</button>
-            <button class="btn-danger" style="flex:1;" onclick="performLogout()">Logout</button>
-        </div>
-    `);
+    showModal(`<h3>Logout</h3><p>Are you sure?</p><div style="display:flex;gap:10px;margin-top:15px;"><button class="btn-outline" style="flex:1;" onclick="hideModal()">Cancel</button><button class="btn-danger" style="flex:1;" onclick="performLogout()">Logout</button></div>`);
 }
 
-function performLogout() {
-    hideModal();
-    logout();
-}
+function performLogout() { hideModal(); logout(); }
+
+console.log('✅ profile.js loaded - ONESHOPLIFY Premium Profile Ready');
