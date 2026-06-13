@@ -1,10 +1,7 @@
-// router.js - FIXED: Deep links work immediately, no onboarding block
+// router.js - FIXED: Saves deep link state before auth, restores after login
 let currentScreen = 'onboarding';
 let screenHistory = [];
 
-// =====================
-// DIRECT NAVIGATION - Works immediately
-// =====================
 function goToAccountType() {
     console.log('📝 Create Account clicked');
     hideAllScreens();
@@ -23,7 +20,7 @@ function showScreen(id) {
 }
 
 function navigateTo(screen, data) {
-    console.log('🧭 navigateTo:', screen);
+    console.log('🧭 navigateTo:', screen, data);
     
     if (screen === currentScreen && screen !== 'product-detail' && screen !== 'dropship-store') return;
     
@@ -32,8 +29,12 @@ function navigateTo(screen, data) {
         'dropship-store', 'product-detail', 'sponsored', 'marketplace'
     ];
     
+    // SAVE CURRENT STATE before redirecting to auth
     if (!publicScreens.includes(screen) && !isLoggedIn()) {
-        console.log('🔒 Auth required for:', screen);
+        console.log('🔒 Auth required, saving state before redirect');
+        // Save what the user was trying to do
+        sessionStorage.setItem('pending_screen', screen);
+        if (data) sessionStorage.setItem('pending_data', JSON.stringify(data));
         screen = 'auth';
     }
     
@@ -57,6 +58,8 @@ function handleScreenLoad(screen, data) {
     switch(screen) {
         case 'home':
             if (typeof loadHomeScreen === 'function') loadHomeScreen();
+            // Check if there's a pending screen to go to after login
+            checkPendingScreen();
             break;
         case 'marketplace':
             if (typeof loadMarketplace === 'function') loadMarketplace();
@@ -143,8 +146,27 @@ function handleScreenLoad(screen, data) {
     }
 }
 
+// Check if user was trying to access something before being redirected to auth
+function checkPendingScreen() {
+    const pendingScreen = sessionStorage.getItem('pending_screen');
+    if (pendingScreen) {
+        console.log('🔙 Returning to pending screen:', pendingScreen);
+        const pendingData = sessionStorage.getItem('pending_data');
+        sessionStorage.removeItem('pending_screen');
+        sessionStorage.removeItem('pending_data');
+        
+        setTimeout(() => {
+            if (pendingData) {
+                navigateTo(pendingScreen, JSON.parse(pendingData));
+            } else {
+                navigateTo(pendingScreen);
+            }
+        }, 500);
+    }
+}
+
 // =====================
-// DEEP LINK DETECTION - Runs IMMEDIATELY
+// DEEP LINK DETECTION
 // =====================
 (function() {
     const path = window.location.pathname;
@@ -180,75 +202,73 @@ function handleScreenLoad(screen, data) {
 })();
 
 // =====================
-// START THE APP - Skip onboarding for deep links
+// START THE APP
 // =====================
 (function startApp() {
     const skipOnboarding = sessionStorage.getItem('skip_onboarding');
     const path = window.location.pathname;
     const storeUsername = sessionStorage.getItem('store_view');
     const productId = sessionStorage.getItem('deep_link_product');
+    const pendingScreen = sessionStorage.getItem('pending_screen');
     
     console.log('🚀 Starting app...');
-    console.log('   skipOnboarding:', skipOnboarding);
-    console.log('   path:', path);
-    console.log('   storeUsername:', storeUsername);
-    console.log('   productId:', productId);
     
-    // HIDE ONBOARDING IMMEDIATELY if deep link
+    // HIDE ONBOARDING if deep link
     if (skipOnboarding === 'true') {
         document.getElementById('screen-onboarding').classList.add('hidden');
     }
     
-    // Determine where to go
+    // DIRECT DEEP LINK HANDLING
     if (path.match(/^\/store\/(.+)/) && storeUsername) {
-        // Go directly to store
         hideAllScreens();
         showScreen('screen-dropship-store');
         currentScreen = 'dropship-store';
         window.location.hash = 'dropship-store';
-        
-        // Check if user is logged in for public/private view
-        if (isLoggedIn()) {
-            handleScreenLoad('dropship-store', { username: storeUsername, isPublic: true });
-        } else {
-            // Load public store without auth
-            if (typeof loadPublicDropshipStore === 'function') {
-                loadPublicDropshipStore(storeUsername);
-            }
+        if (typeof loadPublicDropshipStore === 'function') {
+            loadPublicDropshipStore(storeUsername);
         }
         return;
     }
     
     if ((path.match(/^\/p\/(.+)/) || path.match(/^\/r\/([^\/]+)\/([^\/]+)/)) && productId) {
-        // Go directly to product
         hideAllScreens();
         showScreen('screen-product-detail');
         currentScreen = 'product-detail';
         window.location.hash = 'product-detail';
-        
         if (typeof loadProductDetail === 'function') {
             loadProductDetail({ productId: productId });
         }
         return;
     }
     
-    // Normal flow - check if logged in
+    // NORMAL FLOW
     if (isLoggedIn()) {
         hideAllScreens();
-        showScreen('screen-home');
-        currentScreen = 'home';
-        window.location.hash = 'home';
-        if (typeof loadHomeScreen === 'function') loadHomeScreen();
+        
+        // Check if there's a pending screen to return to
+        if (pendingScreen) {
+            const pendingData = sessionStorage.getItem('pending_data');
+            sessionStorage.removeItem('pending_screen');
+            sessionStorage.removeItem('pending_data');
+            showScreen('screen-' + pendingScreen);
+            currentScreen = pendingScreen;
+            window.location.hash = pendingScreen;
+            if (pendingData) {
+                handleScreenLoad(pendingScreen, JSON.parse(pendingData));
+            } else {
+                handleScreenLoad(pendingScreen);
+            }
+        } else {
+            showScreen('screen-home');
+            currentScreen = 'home';
+            window.location.hash = 'home';
+            if (typeof loadHomeScreen === 'function') loadHomeScreen();
+        }
     }
-    // If not logged in, onboarding stays visible (it's the default)
+    // If not logged in, onboarding stays visible
 })();
 
 window.addEventListener('popstate', () => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && hash !== currentScreen) navigateTo(hash);
-});
-
-window.addEventListener('hashchange', () => {
     const hash = window.location.hash.replace('#', '');
     if (hash && hash !== currentScreen) navigateTo(hash);
 });
