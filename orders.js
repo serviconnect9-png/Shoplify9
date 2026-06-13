@@ -1,4 +1,4 @@
-// orders.js - COMPLETE FINAL VERSION (Escrow counting, Merchant credit on delivery, Full flow)
+// orders.js - COMPLETE FINAL VERSION (Fixed Refund, Discount at Seller's Loss, Full Order Flow)
 
 // =====================
 // CHECKOUT
@@ -25,7 +25,7 @@ async function loadCheckout() {
                 totalDiscount += disc * item.quantity;
                 return `
                     <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;align-items:center;">
-                        <img src="${item.image||'app-icon.png'}" style="width:50px;height:50px;border-radius:8px;">
+                        <img src="${item.image||'/app-icon.png'}" style="width:50px;height:50px;border-radius:8px;">
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:14px;">${item.name}</div>
                             <div style="font-size:12px;color:#666;">${item.color?'Color:'+item.color+' ':''}${item.size?'Size:'+item.size+' ':''}Qty:${item.quantity}</div>
@@ -71,7 +71,7 @@ async function applyCheckoutDiscount() {
     if(!code){msgEl.style.display='block';msgEl.style.color='red';msgEl.textContent='Enter a code';return;}
     try {
         const snap = await db.collection('discount_codes').where('code','==',code).where('active','==',true).get();
-        if(snap.empty){msgEl.style.display='block';msgEl.style.color='red';msgEl.textContent='Invalid code';return;}
+        if(snap.empty){msgEl.style.display='block';msgEl.style.color='red';msgEl.textContent='Invalid or expired code';return;}
         const discount = snap.docs[0].data();
         window._checkoutData.appliedDiscount = discount;
         let totalDisc = 0;
@@ -96,7 +96,7 @@ function updateCheckoutTotals() {
 }
 
 // =====================
-// PLACE ORDER - Funds go to ESCROW (Merchant escrow counts)
+// PLACE ORDER
 // =====================
 async function placeOrder() {
     if(!APP.userProfile){showToast('Please login','error');return;}
@@ -109,70 +109,110 @@ async function placeOrder() {
     const city = document.getElementById('shipping-city')?.value?.trim();
     const address = document.getElementById('shipping-address')?.value?.trim();
     
-    if(!country||!name||!phone||!address){showToast('Fill all fields','error');return;}
+    if(!country||!name||!phone||!address){showToast('Fill all shipping fields','error');return;}
     
     const data = window._checkoutData;
-    const total = (data?.subtotal||0)-(data?.totalDiscount||0);
+    const originalTotal = data?.subtotal || 0;
+    const discountAmount = data?.totalDiscount || 0;
+    const finalTotal = originalTotal - discountAmount; // What customer actually pays
     
-    if(total > (APP.userProfile.walletBalance||0)){showToast('Insufficient balance','error');navigateTo('wallet');return;}
+    if(finalTotal > (APP.userProfile.walletBalance||0)){showToast('Insufficient balance. Please deposit.','error');navigateTo('wallet');return;}
     
     showLoader();
     try {
         const orderId = 'OSL-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-6);
         
-        // Deduct from customer wallet
+        // Deduct from customer wallet (discounted price only)
         await db.collection('users').doc(APP.userProfile.uid).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-total)
+            walletBalance: firebase.firestore.FieldValue.increment(-finalTotal)
         });
-        APP.userProfile.walletBalance -= total;
+        APP.userProfile.walletBalance -= finalTotal;
         
-        // Group by merchant
         const merchantOrders = {};
         cart.forEach(item => {
-            if(!merchantOrders[item.merchantId]) merchantOrders[item.merchantId] = {merchantId:item.merchantId,items:[],total:0};
+            if(!merchantOrders[item.merchantId]) merchantOrders[item.merchantId] = {merchantId:item.merchantId,items:[],sellerTotal:0,discountTotal:0,originalTotal:0};
             merchantOrders[item.merchantId].items.push(item);
-            merchantOrders[item.merchantId].total += item.price * item.quantity;
+            
+            const itemDiscount = item.discountCode ? (item.discountCode.type==='percentage'?item.price*item.discountCode.value/100:item.discountCode.value) : 0;
+            const itemPriceAfterDiscount = item.price - itemDiscount;
+            
+            merchantOrders[item.merchantId].sellerTotal += itemPriceAfterDiscount * item.quantity;
+            merchantOrders[item.merchantId].discountTotal += itemDiscount * item.quantity;
+            merchantOrders[item.merchantId].originalTotal += item.price * item.quantity;
         });
         
-        // Create orders and ADD TO MERCHANT ESCROW
         for(const [mid,order] of Object.entries(merchantOrders)){
+            // Update discount code usage
+            if(data?.appliedDiscount){
+                const discSnap = await db.collection('discount_codes').where('code','==',data.appliedDiscount.code).limit(1).get();
+                if(!discSnap.empty){
+                    const discDoc = discSnap.docs[0];
+                    const disc = discDoc.data();
+                    const usedCount = (disc.usedCount || 0) + 1;
+                    if(disc.maxUses && usedCount >= disc.maxUses){
+                        await discDoc.ref.update({ active: false, usedCount });
+                    } else {
+                        await discDoc.ref.update({ usedCount });
+                    }
+                }
+            }
+            
+            // Create order - seller receives sellerTotal (after discount)
             await db.collection('orders').add({
-                orderId:orderId+'-'+mid.substring(0,4),userId:APP.userProfile.uid,
-                userEmail:APP.userProfile.email||'',userName:name,userPhone:phone,
-                merchantId:mid,items:order.items,total:order.total,escrowAmount:order.total,
-                status:'pending',shipping:{country,city,address,phone,name},
+                orderId:orderId+'-'+mid.substring(0,4),
+                userId:APP.userProfile.uid,
+                userEmail:APP.userProfile.email||'',
+                userName:name,userPhone:phone,
+                merchantId:mid,
+                items:order.items,
+                originalTotal: order.originalTotal,     // Full price before discount
+                discountTotal: order.discountTotal,      // Total discount amount
+                total: order.sellerTotal,               // What seller receives
+                customerPaid: finalTotal,               // What customer actually paid
+                escrowAmount: order.sellerTotal,        // Seller's portion in escrow
+                status:'pending',
+                shipping:{country,city,address,phone,name},
                 trackingNumber:null,courier:null,deliveryType:null,
                 deliveryConfirmed:false,disputed:false,merchantAccepted:false,
                 escrowReleased:false,
+                discountApplied: data?.appliedDiscount || null,
                 createdAt:firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt:firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            // ADD TO MERCHANT ESCROW BALANCE (this makes it count)
+            // Add seller's portion to escrow (what they'll receive)
             await db.collection('users').doc(mid).update({
-                escrowBalance: firebase.firestore.FieldValue.increment(order.total)
+                escrowBalance: firebase.firestore.FieldValue.increment(order.sellerTotal)
             });
             
-            // Notify merchant with escrow info
+            const discountNote = order.discountTotal > 0 ? ` ($${order.discountTotal.toFixed(2)} discount - seller absorbs)` : '';
             await createNotification(mid,'🔔 New Order!',
-                `New order #${orderId} from ${name}. ${formatCurrency(order.total)} added to your escrow. Action required within 72 hours!`,'🔔','orders');
+                `Order #${orderId} from ${name}. You'll receive: ${formatCurrency(order.sellerTotal)}${discountNote}. Action required!`,'🔔','orders');
         }
         
-        // Record transaction
+        // Record transaction for what customer paid
         await db.collection('transactions').add({
-            userId:APP.userProfile.uid,type:'purchase',amount:total,
+            userId:APP.userProfile.uid,type:'purchase',amount:finalTotal,
+            originalAmount:originalTotal,discountAmount:discountAmount,
             currency:'USD',status:'escrow',reference:orderId,
             createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
         
         sessionStorage.removeItem('shoplify_cart'); window._checkoutData = null;
         hideLoader(); if(typeof updateCartBadge==='function') updateCartBadge();
-        showToast('Order placed! Funds in escrow. 🛡️','success'); navigateTo('orders');
+        
+        // Voice notification
+        const productName = cart[0]?.name || 'product';
+        const storeName = cart[0]?.merchantName || 'store';
+        if(typeof speakNotification==='function') speakNotification(`${productName} successfully purchased at ${formatCurrency(finalTotal)} from ${storeName}`);
+        if(typeof sendPushNotification==='function') sendPushNotification('🛒 Purchase!', `${productName} - ${formatCurrency(finalTotal)}`);
+        
+        showToast('Order placed! 🛡️','success'); navigateTo('orders');
     } catch(error){hideLoader();console.error('Order error:',error);showToast('Failed','error');}
 }
 
 // =====================
-// LOAD ORDERS (Customer & Merchant)
+// LOAD ORDERS (Customer & Merchant View)
 // =====================
 async function loadOrdersScreen() {
     const container = document.getElementById('orders-list');
@@ -206,11 +246,15 @@ async function loadOrdersScreen() {
                         <span style="background:${sc[order.status]||'#999'};color:white;padding:3px 10px;border-radius:12px;font-size:11px;">${(order.status||'').replace(/_/g,' ').toUpperCase()} ${order.role==='merchant'?'(Seller)':''}</span>
                     </div>
                     <div style="display:flex;gap:10px;align-items:center;margin-top:8px;">
-                        <img src="${order.items?.[0]?.image||'app-icon.png'}" style="width:50px;height:50px;border-radius:8px;">
+                        <img src="${order.items?.[0]?.image||'/app-icon.png'}" style="width:50px;height:50px;border-radius:8px;">
                         <div style="flex:1;">
                             <div style="font-weight:600;">${order.items?.[0]?.name||'Product'}</div>
                             ${order.role==='merchant'?`<div style="font-size:12px;color:#666;">👤 ${order.userName} | 📞 ${order.userPhone}</div><div style="font-size:12px;color:#666;">📍 ${order.shipping?.address}, ${order.shipping?.city}, ${order.shipping?.country}</div>`:''}
-                            <div style="font-weight:700;">${formatCurrency(order.total)} ${order.escrowReleased?'✅ Paid':'(Escrow)'}</div>
+                            <div style="font-weight:700;">
+                                ${formatCurrency(order.total)}
+                                ${order.discountTotal > 0 ? `<span style="font-size:11px;color:#f44;">(Discount: -${formatCurrency(order.discountTotal)})</span>` : ''}
+                                ${order.escrowReleased ? ' ✅ Paid' : ' (Escrow)'}
+                            </div>
                         </div>
                     </div>
                     
@@ -220,20 +264,13 @@ async function loadOrdersScreen() {
                     
                     ${order.role==='merchant'&&order.status==='processing'?`<button class="btn-gold btn-full" style="margin-top:8px;" onclick="shipOrder('${order.id}')">📦 Ship Order</button>`:''}
                     
-                    ${order.role==='merchant'&&(order.status==='shipped'||order.status==='in_transit')?`
-                        <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">
-                            <button class="btn-small btn-outline" onclick="updateOrderStatus('${order.id}','in_transit')">🚚 In Transit</button>
-                            <button class="btn-small btn-outline" onclick="updateOrderStatus('${order.id}','out_for_delivery')">📬 Out for Delivery</button>
-                            <button class="btn-small btn-success" onclick="updateOrderStatus('${order.id}','delivered')">✅ Delivered</button>
-                        </div>`:''}
+                    ${order.role==='merchant'&&(order.status==='shipped'||order.status==='in_transit')?`<div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;"><button class="btn-small btn-outline" onclick="updateOrderStatus('${order.id}','in_transit')">🚚 In Transit</button><button class="btn-small btn-outline" onclick="updateOrderStatus('${order.id}','out_for_delivery')">📬 Out for Delivery</button><button class="btn-small btn-success" onclick="updateOrderStatus('${order.id}','delivered')">✅ Delivered</button></div>`:''}
                     
                     ${order.role==='merchant'&&order.status==='out_for_delivery'?`<button class="btn-gold btn-full" style="margin-top:8px;" onclick="updateOrderStatus('${order.id}','delivered')">✅ Mark as Delivered</button>`:''}
                     
-                    ${order.status==='delivered'&&!order.deliveryConfirmed&&order.role==='customer'?`
-                        <button class="btn-gold btn-full" style="margin-top:8px;" onclick="confirmDelivery('${order.id}')">✅ Confirm Delivery</button>
-                        <button class="btn-outline btn-full" style="margin-top:5px;" onclick="disputeOrder('${order.id}')">⚠️ Open Dispute</button>`:''}
+                    ${order.status==='delivered'&&!order.deliveryConfirmed&&order.role==='customer'?`<button class="btn-gold btn-full" style="margin-top:8px;" onclick="confirmDelivery('${order.id}')">✅ Confirm Delivery</button><button class="btn-outline btn-full" style="margin-top:5px;" onclick="disputeOrder('${order.id}')">⚠️ Open Dispute</button>`:''}
                     
-                    ${order.rejectionReason?`<div style="background:#FFEBEE;padding:6px;border-radius:6px;margin-top:8px;font-size:12px;color:#C62828;">❌ ${order.rejectionReason}</div>`:''}
+                    ${order.rejectionReason?`<div style="background:#FFEBEE;padding:6px;border-radius:6px;margin-top:8px;font-size:12px;color:#C62828;">❌ ${order.rejectionReason}${order.refundAmount?` (Refunded: ${formatCurrency(order.refundAmount)})`:''}</div>`:''}
                     <div style="font-size:11px;color:#999;margin-top:5px;">${getTimeAgo(order.createdAt)}</div>
                 </div>`;
         });
@@ -241,7 +278,7 @@ async function loadOrdersScreen() {
 }
 
 // =====================
-// MERCHANT: ACCEPT / REJECT
+// MERCHANT: ACCEPT ORDER
 // =====================
 async function acceptOrder(orderId) {
     try {
@@ -255,6 +292,9 @@ async function acceptOrder(orderId) {
                 <p>👤 ${order.userName} | 📞 ${order.userPhone}</p>
                 <p>📍 ${order.shipping?.address}, ${order.shipping?.city}, ${order.shipping?.country}</p>
                 <p>📦 ${order.items?.[0]?.name} x${order.items?.[0]?.quantity||1}</p>
+                ${order.items?.[0]?.color?`<p>🎨 Color: ${order.items[0].color}</p>`:''}
+                ${order.items?.[0]?.size?`<p>📏 Size: ${order.items[0].size}</p>`:''}
+                <p>💰 You'll receive: <strong>${formatCurrency(order.total)}</strong>${order.discountTotal>0?` <span style="color:#f44;">(After $${order.discountTotal.toFixed(2)} discount)</span>`:''}</p>
             </div>
             <button class="btn-gold btn-full" onclick="confirmAcceptOrder('${orderId}')">✅ Confirm Accept</button></div>`);
     } catch(e){showToast('Error','error');}
@@ -275,6 +315,9 @@ async function confirmAcceptOrder(orderId) {
     } catch(e){hideLoader();showToast('Failed','error');}
 }
 
+// =====================
+// MERCHANT: REJECT ORDER (FIXED - Refunds only what customer paid)
+// =====================
 function rejectOrder(orderId) {
     showModal(`
         <div style="padding:10px;"><h3>❌ Reject Order</h3>
@@ -292,36 +335,46 @@ async function confirmRejectOrder(orderId) {
         const doc = await db.collection('orders').doc(orderId).get();
         const order = doc.data();
         
-        // REFUND: Remove from merchant escrow, credit customer
+        // FIX: Refund only what customer actually PAID (customerPaid), not original total
+        const refundAmount = order.customerPaid || order.total || 0;
+        
+        // Remove from merchant escrow (seller's portion only)
         await db.collection('users').doc(order.merchantId).update({
-            escrowBalance: firebase.firestore.FieldValue.increment(-order.total)
+            escrowBalance: firebase.firestore.FieldValue.increment(-(order.total || 0))
         });
+        
+        // REFUND CUSTOMER ONLY WHAT THEY PAID
         await db.collection('users').doc(order.userId).update({
-            walletBalance: firebase.firestore.FieldValue.increment(order.total)
+            walletBalance: firebase.firestore.FieldValue.increment(refundAmount)
         });
         
         await db.collection('orders').doc(orderId).update({
             status:'cancelled',merchantRejected:true,
             rejectionReason:reason+(details?': '+details:''),
-            rejectedAt:firebase.firestore.FieldValue.serverTimestamp()
+            refundAmount: refundAmount,
+            rejectedAt:firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt:firebase.firestore.FieldValue.serverTimestamp()
         });
         
         await db.collection('transactions').add({
-            userId:order.userId,type:'refund',amount:order.total,
+            userId:order.userId,type:'refund',amount:refundAmount,
             currency:'USD',status:'completed',reference:order.orderId,
-            description:'Rejected: '+reason,
+            description:`Rejected: ${reason}. Refunded: ${formatCurrency(refundAmount)} (Customer paid: ${formatCurrency(order.customerPaid||order.total)}, Original: ${formatCurrency(order.originalTotal||order.total)})`,
             createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
         
         await createNotification(order.userId,'❌ Order Rejected',
-            `Order rejected. Reason: ${reason}. ${formatCurrency(order.total)} refunded.`,'❌','orders');
+            `Order #${order.orderId||orderId.substring(0,8)} rejected. Reason: ${reason}. ${formatCurrency(refundAmount)} refunded to your wallet.`,'❌','orders');
         
-        hideLoader(); showToast('Refunded ✅','success'); loadOrdersScreen();
-    } catch(e){hideLoader();showToast('Failed','error');}
+        await createNotification(order.merchantId,'Order Rejected',
+            `Order #${order.orderId||orderId.substring(0,8)} rejected. Customer refunded ${formatCurrency(refundAmount)}.`,'📋','orders');
+        
+        hideLoader(); showToast(`Refunded ${formatCurrency(refundAmount)} ✅`,'success'); loadOrdersScreen();
+    } catch(e){hideLoader();console.error('Reject error:',e);showToast('Failed','error');}
 }
 
 // =====================
-// MERCHANT: SHIP & STATUS UPDATES
+// MERCHANT: SHIP ORDER
 // =====================
 function shipOrder(orderId) {
     showModal(`
@@ -372,17 +425,15 @@ async function updateOrderStatus(orderId, newStatus) {
 }
 
 // =====================
-// CUSTOMER: CONFIRM DELIVERY - RELEASES ESCROW TO MERCHANT
+// CUSTOMER: CONFIRM DELIVERY
 // =====================
 function confirmDelivery(orderId) {
     showModal(`
-        <div style="padding:10px;">
-            <h3>✅ Confirm Delivery</h3>
-            <p style="color:#666;margin:10px 0;">Have you received this order?</p>
-            <p style="color:#f44;font-size:13px;">⚠️ This will release payment to the seller.</p>
-            <button class="btn-gold btn-full" onclick="processDeliveryConfirmation('${orderId}')">✅ Yes, Confirm Delivery</button>
-            <button class="btn-outline btn-full" style="margin-top:5px;" onclick="hideModal()">Cancel</button>
-        </div>`);
+        <div style="padding:10px;"><h3>✅ Confirm Delivery</h3>
+        <p style="color:#666;margin:10px 0;">Have you received this order?</p>
+        <p style="color:#f44;font-size:13px;">⚠️ This will release payment to the seller.</p>
+        <button class="btn-gold btn-full" onclick="processDeliveryConfirmation('${orderId}')">✅ Yes, Confirm Delivery</button>
+        <button class="btn-outline btn-full" style="margin-top:5px;" onclick="hideModal()">Cancel</button></div>`);
 }
 
 async function processDeliveryConfirmation(orderId) {
@@ -394,23 +445,20 @@ async function processDeliveryConfirmation(orderId) {
         
         if(order.escrowReleased){hideLoader();showToast('Already released','info');return;}
         
-        // RELEASE ESCROW: Move from merchant escrow to merchant wallet
-        await db.collection('users').doc(order.merchantId).update({
-            escrowBalance: firebase.firestore.FieldValue.increment(-order.total),
-            walletBalance: firebase.firestore.FieldValue.increment(order.total)
-        });
+        let sellerAmount = order.total || 0;
         
-        // Pay affiliate commission if applicable
-        if(order.affiliateId){
-            const commission = calculateCommission(order.total, APP.affiliateCommissionMin);
-            await db.collection('users').doc(order.affiliateId).update({
-                pendingEarnings: firebase.firestore.FieldValue.increment(commission)
+        // Pay affiliate commission from seller's portion
+        if(order.items?.[0]?.affiliateId){
+            const affiliateCommission = calculateCommission(sellerAmount, APP.affiliateCommissionMin);
+            await db.collection('users').doc(order.items[0].affiliateId).update({
+                pendingEarnings: firebase.firestore.FieldValue.increment(affiliateCommission)
             });
-            await createNotification(order.affiliateId,'💰 Commission Earned!',
-                `You earned ${formatCurrency(commission)} from order #${order.orderId}`,'💰','affiliate');
+            sellerAmount -= affiliateCommission;
+            await createNotification(order.items[0].affiliateId,'💰 Commission!',
+                `Earned ${formatCurrency(affiliateCommission)} from order #${order.orderId}`,'💰','affiliate');
         }
         
-        // Pay dropshipper profit if applicable
+        // Pay dropshipper profit
         if(order.items?.[0]?.isDropship && order.items?.[0]?.dropshipperId){
             const dropshipProfit = (order.items[0].price - order.items[0].minPrice) * order.items[0].quantity;
             if(dropshipProfit > 0){
@@ -418,63 +466,74 @@ async function processDeliveryConfirmation(orderId) {
                     walletBalance: firebase.firestore.FieldValue.increment(dropshipProfit)
                 });
                 await createNotification(order.items[0].dropshipperId,'💰 Dropship Profit!',
-                    `You earned ${formatCurrency(dropshipProfit)} from order #${order.orderId}`,'💰','wallet');
+                    `Earned ${formatCurrency(dropshipProfit)} from order #${order.orderId}`,'💰','wallet');
             }
         }
         
-        // Mark order as completed
+        // Release remaining to seller
+        await db.collection('users').doc(order.merchantId).update({
+            escrowBalance: firebase.firestore.FieldValue.increment(-order.total),
+            walletBalance: firebase.firestore.FieldValue.increment(sellerAmount)
+        });
+        
         await db.collection('orders').doc(orderId).update({
             status:'completed',deliveryConfirmed:true,escrowReleased:true,
+            sellerReceived: sellerAmount,
             confirmedAt:firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt:firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        // Record transactions
         await db.collection('transactions').add({
-            userId:order.merchantId,type:'sale',amount:order.total,
+            userId:order.merchantId,type:'sale',amount:sellerAmount,
             currency:'USD',status:'completed',reference:order.orderId,
             description:'Escrow released',
             createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
         
         await createNotification(order.merchantId,'✅ Payment Released!',
-            `${formatCurrency(order.total)} released from escrow for order #${order.orderId}.`,'✅','wallet');
-        
+            `${formatCurrency(sellerAmount)} released for order #${order.orderId}.`,'✅','wallet');
         await createNotification(order.userId,'✅ Order Completed!',
-            `Payment released to seller for order #${order.orderId}. Thank you!`,'✅','orders');
+            `Payment released for order #${order.orderId}. Thank you!`,'✅','orders');
         
-        hideLoader(); showToast('Delivery confirmed! Payment released. ✅','success');
+        if(typeof speakNotification==='function') speakNotification(`Payment of ${formatCurrency(sellerAmount)} has been released to the seller.`);
+        if(typeof sendPushNotification==='function') sendPushNotification('💰 Payment Released!', `${formatCurrency(sellerAmount)} credited.`);
         
-        // Reload user data
+        hideLoader(); showToast('Delivery confirmed! ✅','success');
         if(typeof reloadUserData==='function') await reloadUserData();
         loadOrdersScreen();
-        
     } catch(e){hideLoader();console.error('Confirmation error:',e);showToast('Failed','error');}
 }
 
 // =====================
-// TRACK & DISPUTE
+// TRACK ORDER
 // =====================
 async function trackOrder(orderId) {
     try {
         const doc = await db.collection('orders').doc(orderId).get();
         if(!doc.exists){showToast('Not found','error');return;}
         const o = doc.data();
-        showModal(`<div style="padding:10px;"><h3>📍 Track Order</h3>
-            <div style="background:#f5f5f5;padding:12px;border-radius:8px;">
-                <p>Status: ${(o.status||'').replace(/_/g,' ').toUpperCase()}</p>
-                <p>Courier: ${o.courier||'N/A'}</p>
-                <p>Tracking: ${o.trackingNumber||'Pending'}</p>
-                <p>Destination: ${o.shipping?.city}, ${o.shipping?.country}</p>
-            </div><button class="btn-gold btn-full" onclick="hideModal()">Close</button></div>`);
+        showModal(`
+            <div style="padding:10px;"><h3>📍 Track Order #${o.orderId||orderId.substring(0,8)}</h3>
+            <div style="background:#f5f5f5;padding:12px;border-radius:8px;margin:10px 0;">
+                <p><strong>Status:</strong> ${(o.status||'').replace(/_/g,' ').toUpperCase()}</p>
+                <p><strong>Courier:</strong> ${o.courier||'N/A'}</p>
+                <p><strong>Tracking:</strong> ${o.trackingNumber||'Pending'}</p>
+                <p><strong>Destination:</strong> ${o.shipping?.city||''}, ${o.shipping?.country||''}</p>
+                ${o.estimatedDelivery?`<p><strong>Est. Delivery:</strong> ${o.estimatedDelivery.toDate?.()?.toLocaleDateString()||'TBD'}</p>`:''}
+            </div>
+            <button class="btn-gold btn-full" onclick="hideModal()">Close</button></div>`);
     } catch(e){showToast('Error','error');}
 }
 
+// =====================
+// DISPUTE ORDER
+// =====================
 function disputeOrder(orderId) {
-    showModal(`<div style="padding:10px;"><h3>⚠️ Dispute</h3>
+    showModal(`
+        <div style="padding:10px;"><h3>⚠️ Open Dispute</h3>
         <div class="input-group"><label>Reason</label><select id="dispute-reason" class="input-field"><option value="">Select...</option><option value="not_received">Not Received</option><option value="damaged">Damaged</option><option value="wrong_item">Wrong Item</option><option value="counterfeit">Counterfeit</option></select></div>
         <div class="input-group"><label>Description</label><textarea id="dispute-desc" class="input-field" rows="3"></textarea></div>
-        <button class="btn-danger btn-full" onclick="submitDispute('${orderId}')">Submit</button></div>`);
+        <button class="btn-danger btn-full" onclick="submitDispute('${orderId}')">Submit Dispute</button></div>`);
 }
 
 async function submitDispute(orderId) {
@@ -485,6 +544,47 @@ async function submitDispute(orderId) {
     try {
         await db.collection('orders').doc(orderId).update({disputed:true,status:'disputed',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
         await db.collection('disputes').add({orderId,userId:APP.userProfile.uid,userEmail:APP.userProfile.email,type:reason,description:desc,status:'open',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-        showToast('Dispute submitted','success'); loadOrdersScreen();
+        showToast('Dispute submitted. Our team will review.','success'); loadOrdersScreen();
     } catch(e){showToast('Failed','error');}
 }
+
+// =====================
+// STORE TRANSACTIONS
+// =====================
+async function loadStoreTransactions() {
+    const container = document.getElementById('transactions-full');
+    if(!container||!APP.userProfile?.isMerchant) return;
+    try {
+        const ordersSnap = await db.collection('orders').where('merchantId','==',APP.userProfile.uid).get();
+        const txSnap = await db.collection('transactions').where('userId','==',APP.userProfile.uid).get();
+        const allTx = [];
+        ordersSnap.forEach(d=>{const o=d.data();allTx.push({id:d.id,type:'sale',amount:o.total,status:o.status,date:o.createdAt,orderId:o.orderId,customer:o.userName,customerPaid:o.customerPaid,discountTotal:o.discountTotal});});
+        txSnap.forEach(d=>{const t=d.data();if(['commission','subscription','sponsorship','refund'].includes(t.type))allTx.push({id:d.id,type:t.type,amount:t.amount,status:t.status,date:t.createdAt,description:t.description});});
+        allTx.sort((a,b)=>(b.date?.toDate?.()||0)-(a.date?.toDate?.()||0));
+        
+        container.innerHTML = '<h3 style="padding:15px;">💰 Store Transactions</h3>';
+        if(allTx.length===0){container.innerHTML+='<p style="text-align:center;color:#999;padding:20px;">No transactions yet</p>';return;}
+        
+        allTx.forEach(tx=>{
+            const icons={sale:'🛒',commission:'💰',subscription:'⭐',sponsorship:'📢',refund:'↩️'};
+            container.innerHTML+=`
+                <div style="display:flex;align-items:center;gap:10px;padding:12px;background:white;border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="showTransactionDetail('${tx.id}','${tx.type}')">
+                    <span style="font-size:22px;">${icons[tx.type]||'💳'}</span>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">${tx.type.toUpperCase()} ${tx.orderId?'#'+tx.orderId:''}</div>
+                        <div style="font-size:12px;color:#666;">${tx.customer||tx.description||''}</div>
+                        ${tx.discountTotal>0?`<div style="font-size:11px;color:#f44;">Discount: -${formatCurrency(tx.discountTotal)}</div>`:''}
+                        ${tx.customerPaid?`<div style="font-size:11px;color:#666;">Customer paid: ${formatCurrency(tx.customerPaid)}</div>`:''}
+                        <div style="font-size:11px;color:#999;">${getTimeAgo(tx.date)}</div>
+                    </div>
+                    <div style="font-weight:700;color:${tx.type==='refund'?'var(--red)':'var(--green)'};">${tx.type==='refund'?'-':''}${formatCurrency(tx.amount)}</div>
+                </div>`;
+        });
+    } catch(e){container.innerHTML='<p style="text-align:center;padding:40px;">Error loading transactions</p>';}
+}
+
+function showTransactionDetail(txId, txType) {
+    showToast('Transaction ID: ' + txId.substring(0,12) + '...', 'info');
+}
+
+console.log('✅ orders.js fully loaded - ONESHOPLIFY Order System Ready');
