@@ -1,11 +1,10 @@
-// router.js - COMPLETELY FIXED: Deep links work without auth
-
+// router.js - FIXED DEEP LINKS (No auth required for viewing products/stores)
 let currentScreen = 'onboarding';
 let screenHistory = [];
 
 // SIMPLE NAVIGATION - works immediately
 function goToAccountType() {
-    console.log('📝 Create Account clicked');
+    console.log('📝 Create Account clicked - direct navigation');
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-account-type').classList.remove('hidden');
     window.location.hash = 'account-type';
@@ -13,62 +12,44 @@ function goToAccountType() {
 }
 
 function navigateTo(screen, data) {
-    console.log('🧭 Navigating to:', screen, data ? 'with data' : '');
+    console.log('🧭 Navigating to:', screen, data ? JSON.stringify(data).substring(0, 100) : '');
     
-    // Don't navigate to same screen unless it's product-detail or dropship-store
-    if (screen === currentScreen && screen !== 'product-detail' && screen !== 'dropship-store') {
-        console.log('   Already on this screen');
-        return;
-    }
+    if (screen === currentScreen && screen !== 'product-detail' && screen !== 'dropship-store') return;
     
-    // These screens are PUBLIC - no auth required
+    // PUBLIC SCREENS - no auth required
     const publicScreens = [
-        'onboarding', 'auth', 'account-type', 'setup-credentials',
-        'dropship-store', 'product-detail', 'sponsored', 'marketplace',
-        'hall-of-fame', 'leaderboard'
+        'onboarding', 'auth', 'account-type', 'setup-credentials', 
+        'dropship-store', 'product-detail', 'sponsored', 'marketplace'
     ];
     
-    // Only redirect to auth for NON-public screens when not logged in
-    if (!publicScreens.includes(screen)) {
-        if (!isLoggedIn()) {
-            console.log('🔒 Auth required for:', screen);
-            screen = 'auth';
-        }
+    // Only redirect to auth if screen requires login AND user is not logged in
+    if (!publicScreens.includes(screen) && !isLoggedIn()) {
+        console.log('🔒 Screen requires auth, redirecting to auth');
+        screen = 'auth';
     }
     
-    // Save history
     screenHistory.push(currentScreen);
     
-    // Hide all screens
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     
-    // Show target screen
     const targetScreen = document.getElementById(`screen-${screen}`);
     if (targetScreen) {
         targetScreen.classList.remove('hidden');
         currentScreen = screen;
         window.location.hash = screen;
-        
-        if (data) {
-            sessionStorage.setItem(`screen_data_${screen}`, JSON.stringify(data));
-        }
-        
-        // Load screen content
+        if (data) sessionStorage.setItem(`screen_data_${screen}`, JSON.stringify(data));
         handleScreenLoad(screen, data);
-        
-        // Scroll to top
         const appEl = document.getElementById('app');
         if (appEl) appEl.scrollTop = 0;
-        
-        console.log('✅ Navigated to:', screen);
     } else {
-        console.error('❌ Screen element not found:', screen);
-        // Fallback to onboarding if screen doesn't exist
-        const onboardingScreen = document.getElementById('screen-onboarding');
-        if (onboardingScreen) {
-            onboardingScreen.classList.remove('hidden');
-            currentScreen = 'onboarding';
-            window.location.hash = 'onboarding';
+        console.error('❌ Screen not found:', screen);
+        // Fallback to home
+        const homeScreen = document.getElementById('screen-home');
+        if (homeScreen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            homeScreen.classList.remove('hidden');
+            currentScreen = 'home';
+            window.location.hash = 'home';
         }
     }
 }
@@ -79,172 +60,127 @@ function goBack() {
 }
 
 function handleScreenLoad(screen, data) {
-    console.log('📄 handleScreenLoad:', screen);
+    console.log('📄 Loading screen:', screen, data);
     
     switch(screen) {
         case 'home':
             if (typeof loadHomeScreen === 'function') loadHomeScreen();
             break;
-            
         case 'marketplace':
             if (typeof loadMarketplace === 'function') loadMarketplace();
             break;
-            
         case 'product-detail':
-            // Get product ID from data or session storage
-            let productId = data?.productId;
-            if (!productId) {
-                productId = sessionStorage.getItem('deep_link_product');
-                console.log('🔗 Using deep link product:', productId);
+            // Check for deep link product
+            if (!data || !data.productId) {
+                const deepLinkProductId = sessionStorage.getItem('deep_link_product');
+                if (deepLinkProductId) {
+                    console.log('🔗 Loading product from deep link:', deepLinkProductId);
+                    data = { productId: deepLinkProductId };
+                }
             }
-            if (productId && typeof loadProductDetail === 'function') {
-                loadProductDetail({ productId });
-            } else if (typeof loadProductDetail === 'function') {
-                loadProductDetail(null);
+            if (typeof loadProductDetail === 'function') {
+                loadProductDetail(data);
+            } else {
+                console.error('❌ loadProductDetail not found');
+                document.getElementById('product-detail-content').innerHTML = 
+                    '<p style="text-align:center;padding:40px;">Loading product...</p>';
             }
             break;
-            
         case 'sponsored':
             if (typeof loadSponsoredProductsPage === 'function') loadSponsoredProductsPage();
             break;
-            
         case 'checkout':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadCheckout === 'function') loadCheckout();
             break;
-            
         case 'orders':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadOrdersScreen === 'function') loadOrdersScreen();
             break;
-            
         case 'wallet':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadWalletScreen === 'function') loadWalletScreen();
             break;
-            
         case 'affiliate':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadAffiliateDashboard === 'function') loadAffiliateDashboard();
             break;
-            
         case 'advertisers':
             if (typeof loadAdvertisers === 'function') loadAdvertisers();
             break;
-            
         case 'affiliate-install':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadAffiliateInstall === 'function') loadAffiliateInstall();
             break;
-            
         case 'merchant':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadMerchantDashboard === 'function') loadMerchantDashboard();
             break;
-            
         case 'store-setup':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadStoreSetup === 'function') loadStoreSetup();
             break;
-            
         case 'add-product':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadAddProductForm === 'function') loadAddProductForm();
             break;
-            
         case 'dropship':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadDropshipDashboard === 'function') loadDropshipDashboard();
             break;
-            
         case 'dropship-store':
-            // PUBLIC - no auth required
             console.log('🏪 Dropship store - data:', data);
+            // Check for public store view
             if (data && data.isPublic && data.username) {
-                // Public store view
+                console.log('🏪 Loading PUBLIC store for:', data.username);
                 if (typeof loadPublicDropshipStore === 'function') {
                     loadPublicDropshipStore(data.username);
                 } else {
-                    console.error('❌ loadPublicDropshipStore not found');
+                    document.getElementById('dropship-store-content').innerHTML = 
+                        '<p style="text-align:center;padding:40px;">Loading store...</p>';
                 }
             } else if (data && data.username) {
-                // Store with username
+                console.log('🏪 Loading store for username:', data.username);
                 if (typeof loadPublicDropshipStore === 'function') {
                     loadPublicDropshipStore(data.username);
                 }
+            } else if (typeof loadDropshipStore === 'function') {
+                loadDropshipStore(data);
             } else {
-                // Check session for store username
-                const storeUser = sessionStorage.getItem('store_view');
-                if (storeUser && typeof loadPublicDropshipStore === 'function') {
-                    loadPublicDropshipStore(storeUser);
-                } else if (typeof loadDropshipStore === 'function') {
-                    loadDropshipStore(data);
-                }
+                document.getElementById('dropship-store-content').innerHTML = 
+                    '<p style="text-align:center;padding:40px;">Loading store...</p>';
             }
             break;
-            
         case 'profile':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadProfileScreen === 'function') loadProfileScreen();
             break;
-            
         case 'settings':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadSettingsScreen === 'function') loadSettingsScreen();
             break;
-            
         case 'notifications':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadNotificationsScreen === 'function') loadNotificationsScreen();
             break;
-            
         case 'transactions':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadStoreTransactions === 'function') loadStoreTransactions();
             break;
-            
         case 'leaderboard':
             if (typeof loadLeaderboard === 'function') loadLeaderboard();
             break;
-            
         case 'analytics':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadAnalytics === 'function') loadAnalytics();
             break;
-            
         case 'customerservice':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadCustomerServicePanel === 'function') loadCustomerServicePanel();
             break;
-            
         case 'disputes-manage':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadDisputesManagement === 'function') loadDisputesManagement();
             break;
-            
         case 'vip':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadVIPPage === 'function') loadVIPPage();
             break;
-            
         case 'hall-of-fame':
             if (typeof loadHallOfFame === 'function') loadHallOfFame();
             break;
-            
         case 'flash-campaigns':
             if (typeof loadFlashCampaigns === 'function') loadFlashCampaigns();
             break;
-            
         case 'influencer-apply':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadInfluencerApplication === 'function') loadInfluencerApplication();
             break;
-            
         case 'recruit-affiliates':
-            if (!isLoggedIn()) { navigateTo('auth'); return; }
             if (typeof loadRecruitAffiliates === 'function') loadRecruitAffiliates();
             break;
-            
         default:
             console.warn('⚠️ Unknown screen:', screen);
             break;
@@ -252,11 +188,11 @@ function handleScreenLoad(screen, data) {
 }
 
 // =====================
-// DEEP LINK DETECTION - Runs immediately
+// DEEP LINK DETECTION - Runs on page load
 // =====================
 (function detectDeepLinks() {
     const path = window.location.pathname;
-    console.log('🔍 Detecting deep links for path:', path);
+    console.log('🔍 Checking path:', path);
     
     // Store URL: /store/:username
     const storeMatch = path.match(/^\/store\/(.+)/);
@@ -300,71 +236,90 @@ function handleScreenLoad(screen, data) {
 })();
 
 // =====================
-// INITIAL SCREEN - Runs when page loads
+// INITIAL SCREEN - Runs on page load
 // =====================
 window.addEventListener('load', () => {
-    console.log('📱 Page loaded, determining initial screen...');
+    console.log('📱 Window loaded, determining initial screen...');
     
     const path = window.location.pathname;
     const hash = window.location.hash.replace('#', '');
-    const forceStore = sessionStorage.getItem('force_dropship_store');
     const forceProduct = sessionStorage.getItem('force_product_detail');
-    const storeUsername = sessionStorage.getItem('store_view');
+    const forceStore = sessionStorage.getItem('force_dropship_store');
     const deepLinkProduct = sessionStorage.getItem('deep_link_product');
-    
-    console.log('   Path:', path);
-    console.log('   Force store:', forceStore);
-    console.log('   Force product:', forceProduct);
-    console.log('   Store username:', storeUsername);
-    console.log('   Product ID:', deepLinkProduct);
+    const storeUsername = sessionStorage.getItem('store_view');
     
     let initialScreen = 'onboarding';
     
-    // PRIORITY: Deep links override everything
+    // CHECK DEEP LINKS FIRST - these don't require auth
     if (forceStore === 'true' && storeUsername) {
-        console.log('🏪 PRIORITY: Store deep link');
+        console.log('🏪 Store deep link - going to dropship-store:', storeUsername);
         initialScreen = 'dropship-store';
     } else if (forceProduct === 'true' && deepLinkProduct) {
-        console.log('🛍️ PRIORITY: Product deep link');
+        console.log('🛍️ Product deep link - going to product-detail:', deepLinkProduct);
+        initialScreen = 'product-detail';
+    } else if (path.match(/^\/store\/(.+)/)) {
+        console.log('🏪 Direct store URL match');
+        initialScreen = 'dropship-store';
+    } else if (path.match(/^\/p\/(.+)/)) {
+        console.log('🛍️ Direct product URL match');
+        initialScreen = 'product-detail';
+    } else if (path.match(/^\/r\/([^\/]+)\/([^\/]+)/)) {
+        console.log('📢 Direct affiliate URL match');
         initialScreen = 'product-detail';
     } else if (hash) {
         initialScreen = hash;
     }
     
-    // Only go to home if logged in AND no deep link
-    const publicScreens = ['dropship-store', 'product-detail', 'marketplace', 'sponsored', 'hall-of-fame', 'leaderboard'];
-    if (!publicScreens.includes(initialScreen) && !forceStore && !forceProduct) {
+    // Only redirect to home if user is logged in AND on onboarding/auth
+    // DO NOT redirect if there's a deep link
+    if (!forceProduct && !forceStore && !path.match(/^\/(store|p|r)\//)) {
         if (isLoggedIn() && ['onboarding', 'auth'].includes(initialScreen)) {
+            console.log('👤 User logged in, going to home');
             initialScreen = 'home';
         }
     }
     
     console.log('🎯 Final initial screen:', initialScreen);
     
-    // Navigate with a small delay to ensure DOM is ready
+    // Navigate to the determined screen
     setTimeout(() => {
         navigateTo(initialScreen);
-    }, 200);
+    }, 100);
 });
 
 // =====================
 // HANDLE DEEP LINKS AFTER AUTH
 // =====================
 function handleDeepLinksAfterAuth() {
-    const forceStore = sessionStorage.getItem('force_dropship_store');
+    const linkType = sessionStorage.getItem('deep_link_type');
     const forceProduct = sessionStorage.getItem('force_product_detail');
+    const forceStore = sessionStorage.getItem('force_dropship_store');
     const storeUsername = sessionStorage.getItem('store_view');
-    const deepLinkProduct = sessionStorage.getItem('deep_link_product');
     
     console.log('🔗 Handling deep links after auth...');
     
     if (forceStore === 'true' && storeUsername) {
+        sessionStorage.removeItem('deep_link_type');
         sessionStorage.removeItem('force_dropship_store');
         sessionStorage.removeItem('store_view');
+        console.log('🏪 Navigating to public store:', storeUsername);
         navigateTo('dropship-store', { username: storeUsername, isPublic: true });
-    } else if (forceProduct === 'true' && deepLinkProduct) {
-        sessionStorage.removeItem('force_product_detail');
-        navigateTo('product-detail', { productId: deepLinkProduct });
+    } else if (forceProduct === 'true') {
+        const productId = sessionStorage.getItem('deep_link_product');
+        if (productId) {
+            const linkType = sessionStorage.getItem('deep_link_type');
+            if (linkType === 'affiliate') {
+                const data = JSON.parse(sessionStorage.getItem('affiliate_click') || '{}');
+                if (data.affiliateId && data.productId && typeof trackAffiliateClick === 'function') {
+                    trackAffiliateClick(data.affiliateId, data.productId);
+                }
+                sessionStorage.removeItem('affiliate_click');
+            }
+            sessionStorage.removeItem('deep_link_type');
+            sessionStorage.removeItem('force_product_detail');
+            console.log('🛍️ Navigating to product:', productId);
+            navigateTo('product-detail', { productId });
+        }
     }
 }
 
@@ -378,4 +333,4 @@ window.addEventListener('hashchange', () => {
     if (hash && hash !== currentScreen) navigateTo(hash);
 });
 
-console.log('✅ router.js loaded - ONESHOPLIFY Router Ready');
+console.log('✅ router.js loaded');
