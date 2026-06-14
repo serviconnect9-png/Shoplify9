@@ -2,20 +2,8 @@
   "version": 2,
   "routes": [
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|json|xml|txt|webmanifest|woff|woff2|ttf|eot))",
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|json|xml|txt|webmanifest|woff|woff2|ttf|eot|mp4|webp|pdf))",
       "dest": "/$1"
-    },
-    {
-      "src": "/store/(.*)",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/p/(.*)",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/r/(.*)",
-      "dest": "/index.html"
     },
     {
       "src": "/(.*)",
