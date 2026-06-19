@@ -1,4 +1,4 @@
-// profile.js - COMPLETE FINAL VERSION (All Subscriptions Working, Store Plans Visible)
+// profile.js - COMPLETE FINAL VERSION (Clear Store Setup Button with Image)
 // ONESHOPLIFY Enterprise - Profile, Settings, Store Ownership, Dropship, Influencer
 console.log('✅ profile.js loaded');
 
@@ -37,7 +37,7 @@ async function loadProfileScreen() {
     let subscriptionHTML = '';
     
     // =====================
-    // STORE OWNERSHIP STATUS
+    // STORE OWNERSHIP - BIG BANNER
     // =====================
     if (APP.userProfile.hasStore) {
         const storeExpiry = APP.userProfile.storeExpiry;
@@ -50,69 +50,86 @@ async function loadProfileScreen() {
             
             if (daysLeft <= 5 && daysLeft > 0) {
                 storeStatusHTML = `
-                    <div style="background:#FFF3E0;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #FF9800;">
+                    <div style="background:#FFF3E0;padding:14px;border-radius:12px;margin:10px 0;border:1px solid #FFE082;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
                             <div>
-                                <strong>🏪 ${APP.userProfile.storeName || 'My Store'}</strong>
-                                <p style="font-size:12px;color:#E65100;margin-top:3px;">
-                                    ⏰ Expires in <strong>${daysLeft} day${daysLeft > 1 ? 's' : ''}</strong>
-                                </p>
+                                <strong style="font-size:15px;">🏪 ${APP.userProfile.storeName || 'My Store'}</strong>
+                                <p style="font-size:12px;color:#E65100;margin-top:3px;">⏰ Expires in <strong>${daysLeft} day${daysLeft > 1 ? 's' : ''}</strong></p>
                             </div>
                             <button class="btn-small btn-gold" onclick="renewStoreSubscription()">Renew</button>
                         </div>
                     </div>`;
             } else if (daysLeft <= 0) {
                 storeStatusHTML = `
-                    <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #F44336;">
+                    <div style="background:#FFEBEE;padding:14px;border-radius:12px;margin:10px 0;border:1px solid #FFCDD2;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
                             <div>
-                                <strong>🏪 Store Expired</strong>
+                                <strong style="font-size:15px;">🏪 Store Expired</strong>
                                 <p style="font-size:12px;color:#C62828;margin-top:3px;">Renew to keep your store active</p>
                             </div>
-                            <button class="btn-small btn-gold" onclick="renewStoreSubscription()">Renew</button>
+                            <button class="btn-small btn-gold" onclick="renewStoreSubscription()">Renew Now</button>
                         </div>
                     </div>`;
             } else {
                 storeStatusHTML = `
-                    <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
-                        <span>🏪 <strong>${APP.userProfile.storeName || 'Store'}</strong> - ${daysLeft} days remaining</span>
+                    <div style="background:#E8F5E9;padding:12px 15px;border-radius:12px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;border:1px solid #C8E6C9;">
+                        <span>🏪 <strong>${APP.userProfile.storeName || 'Store Active'}</strong> · ${daysLeft} days left</span>
                         ${daysLeft <= 15 ? `<button class="btn-small btn-outline" onclick="renewStoreSubscription()">Renew</button>` : ''}
                     </div>`;
             }
         } else {
             storeStatusHTML = `
-                <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">
+                <div style="background:#E8F5E9;padding:12px 15px;border-radius:12px;margin:5px 0;font-size:13px;border:1px solid #C8E6C9;">
                     🏪 <strong>${APP.userProfile.storeName || 'Store Active'}</strong>
                 </div>`;
         }
         
         subscriptionHTML += storeStatusHTML;
         
-        // Store Dashboard Button
+        // Store Dashboard Button with icon
         subscriptionHTML += `
-            <button class="menu-item" onclick="openStoreDashboard()">
-                <span class="menu-icon">📊</span> Store Dashboard
+            <button class="menu-item" onclick="openStoreDashboard()" style="background:linear-gradient(135deg,#FFF8E1,#FFFDE7);border:2px solid #FFD700;">
+                <span class="menu-icon" style="font-size:28px;">🏪</span>
+                <div style="flex:1;text-align:left;">
+                    <div style="font-weight:700;font-size:15px;">Store Dashboard</div>
+                    <div style="font-size:11px;color:#666;">Manage products, orders & settings</div>
+                </div>
                 <span class="menu-arrow">›</span>
             </button>`;
             
     } else if (APP.userProfile.isMerchant) {
         // Legacy merchant
         subscriptionHTML += `
-            <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">
+            <div style="background:#E8F5E9;padding:12px 15px;border-radius:12px;margin:5px 0;font-size:13px;border:1px solid #C8E6C9;">
                 🏪 <strong>Merchant Active</strong> - ${APP.userProfile.merchantSubscription === 'lifetime' ? 'Lifetime' : 'Active'}
             </div>
-            <button class="menu-item" onclick="navigateTo('merchant')">
-                <span class="menu-icon">📊</span> Merchant Dashboard
+            <button class="menu-item" onclick="navigateTo('merchant')" style="background:linear-gradient(135deg,#FFF8E1,#FFFDE7);border:2px solid #FFD700;">
+                <span class="menu-icon" style="font-size:28px;">📊</span>
+                <div style="flex:1;text-align:left;">
+                    <div style="font-weight:700;font-size:15px;">Merchant Dashboard</div>
+                    <div style="font-size:11px;color:#666;">Manage your store & products</div>
+                </div>
                 <span class="menu-arrow">›</span>
             </button>`;
     } else {
-        // No store - show "Own a Store" button
+        // NO STORE - Show big attractive "Own a Store" banner
         subscriptionHTML += `
-            <button class="menu-item" onclick="showStorePlans()">
-                <span class="menu-icon">🏪</span> Own a Store
-                <span style="margin-left:auto;color:var(--gold-dark);">From $5/mo</span>
-                <span class="menu-arrow">›</span>
-            </button>`;
+            <div onclick="showStorePlans()" style="cursor:pointer;background:linear-gradient(135deg,#667eea,#764ba2);padding:20px;border-radius:14px;margin:10px 0;color:white;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(102,126,234,0.3);">
+                <div style="position:absolute;top:-20px;right:-20px;font-size:80px;opacity:0.15;">🏪</div>
+                <div style="position:relative;z-index:1;">
+                    <div style="font-size:32px;margin-bottom:8px;">🏪</div>
+                    <h3 style="margin:0 0 5px;font-size:18px;">Own Your Store</h3>
+                    <p style="opacity:0.9;font-size:13px;margin:0 0 12px;">Create your own store on ONESHOPLIFY</p>
+                    <div style="display:inline-block;background:white;color:#667eea;padding:8px 18px;border-radius:20px;font-weight:700;font-size:13px;">
+                        Get Started from $5/mo →
+                    </div>
+                    <div style="display:flex;gap:15px;margin-top:12px;font-size:11px;opacity:0.8;">
+                        <span>✅ Your own link</span>
+                        <span>✅ Add products</span>
+                        <span>✅ Sell tickets</span>
+                    </div>
+                </div>
+            </div>`;
     }
     
     // =====================
@@ -128,25 +145,24 @@ async function loadProfileScreen() {
             
             if (daysLeft <= 3 && daysLeft > 0) {
                 subscriptionHTML += `
-                    <div style="background:#FFF3E0;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #FF9800;">
+                    <div style="background:#FFF3E0;padding:12px;border-radius:10px;margin:8px 0;border-left:4px solid #FF9800;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <div>
-                                <strong>📦 ${planName.toUpperCase()} Dropship</strong>
-                                <p style="font-size:12px;color:#E65100;">⏰ ${daysLeft} day${daysLeft>1?'s':''} left</p>
-                            </div>
+                            <div><strong>📦 ${planName.toUpperCase()} Dropship</strong><p style="font-size:11px;color:#E65100;">⏰ ${daysLeft} day${daysLeft>1?'s':''} left</p></div>
                             <button class="btn-small btn-gold" onclick="renewDropshipSubscription()">Renew</button>
                         </div>
                     </div>`;
             } else if (daysLeft <= 0) {
                 subscriptionHTML += `
-                    <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin:10px 0;border-left:4px solid #F44336;">
-                        <div><strong>📦 Dropship Expired</strong></div>
-                        <button class="btn-small btn-gold" onclick="renewDropshipSubscription()">Renew</button>
+                    <div style="background:#FFEBEE;padding:12px;border-radius:10px;margin:8px 0;border-left:4px solid #F44336;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div><strong>📦 Dropship Expired</strong></div>
+                            <button class="btn-small btn-gold" onclick="renewDropshipSubscription()">Renew</button>
+                        </div>
                     </div>`;
             } else {
                 subscriptionHTML += `
-                    <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;">
-                        <span>📦 <strong>${planName.toUpperCase()} Dropship</strong> - ${daysLeft} days</span>
+                    <div style="background:#E8F5E9;padding:10px 15px;border-radius:10px;margin:5px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+                        <span>📦 <strong>${planName.toUpperCase()}</strong> · ${daysLeft}d</span>
                         <div>
                             ${daysLeft <= 10 ? `<button class="btn-small btn-outline" onclick="renewDropshipSubscription()">Renew</button>` : ''}
                             <button class="btn-small btn-outline" onclick="navigateTo('dropship')" style="margin-left:5px;">Upgrade</button>
@@ -168,15 +184,15 @@ async function loadProfileScreen() {
     // =====================
     if (APP.userProfile.influencerStatus === 'approved') {
         subscriptionHTML += `
-            <div style="background:#E8F5E9;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">
+            <div style="background:#E8F5E9;padding:10px 15px;border-radius:10px;margin:5px 0;font-size:13px;">
                 🤝 <strong>Influencer Active</strong>${APP.userProfile.influencerVerified ? ' ✓ Verified' : ''}
             </div>`;
     } else if (APP.userProfile.influencerStatus === 'pending') {
-        subscriptionHTML += `<div style="background:#FFF8E1;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🤝 <strong>Application Pending</strong></div>`;
+        subscriptionHTML += `<div style="background:#FFF8E1;padding:10px 15px;border-radius:10px;margin:5px 0;font-size:13px;">🤝 <strong>Application Pending</strong></div>`;
     } else if (APP.userProfile.influencerStatus === 'suspended') {
-        subscriptionHTML += `<div style="background:#FFEBEE;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🤝 <strong>Suspended</strong></div>`;
+        subscriptionHTML += `<div style="background:#FFEBEE;padding:10px 15px;border-radius:10px;margin:5px 0;font-size:13px;">🤝 <strong>Suspended</strong></div>`;
     } else if (APP.userProfile.influencerStatus === 'rejected') {
-        subscriptionHTML += `<div style="background:#FFEBEE;padding:10px 15px;border-radius:8px;margin:5px 0;font-size:13px;">🤝 <strong>Rejected</strong></div>`;
+        subscriptionHTML += `<div style="background:#FFEBEE;padding:10px 15px;border-radius:10px;margin:5px 0;font-size:13px;">🤝 <strong>Rejected</strong></div>`;
     } else {
         subscriptionHTML += `
             <button class="menu-item" onclick="showInfluencerApplication()">
@@ -228,8 +244,12 @@ async function loadProfileScreen() {
             </button>
             
             ${APP.userProfile.hasStore ? `
-                <button class="menu-item" onclick="openStoreDashboard()">
-                    <span class="menu-icon">📊</span> Store Dashboard
+                <button class="menu-item" onclick="openStoreDashboard()" style="background:linear-gradient(135deg,#FFF8E1,#FFFDE7);border:2px solid #FFD700;">
+                    <span class="menu-icon" style="font-size:28px;">🏪</span>
+                    <div style="flex:1;text-align:left;">
+                        <div style="font-weight:700;">Store Dashboard</div>
+                        <div style="font-size:11px;color:#666;">Manage your store</div>
+                    </div>
                     <span class="menu-arrow">›</span>
                 </button>
             ` : ''}
@@ -287,60 +307,63 @@ async function loadProfileScreen() {
 }
 
 // =====================
-// STORE OWNERSHIP - SHOW PLANS
+// STORE PLANS - SHOWS WHEN CLICKED
 // =====================
 function showStorePlans() {
     const plans = [
-        { name: 'Monthly', price: 5, period: 'month', color: '#667eea', icon: '📅' },
-        { name: '3 Months', price: 13.50, period: 'quarter', color: '#2196F3', icon: '📆', savings: 1.50 },
-        { name: '6 Months', price: 24, period: 'biannual', color: '#9C27B0', icon: '📊', savings: 6 },
-        { name: 'Annual', price: 45, period: 'annual', color: '#FF9800', icon: '👑', savings: 15 }
+        { name: 'Monthly', price: 5, period: 'month', color: '#667eea', icon: '📅', popular: false },
+        { name: '3 Months', price: 13.50, period: 'quarter', color: '#2196F3', icon: '📆', savings: 1.50, popular: true },
+        { name: '6 Months', price: 24, period: 'biannual', color: '#9C27B0', icon: '📊', savings: 6, popular: false },
+        { name: 'Annual', price: 45, period: 'annual', color: '#FF9800', icon: '👑', savings: 15, popular: false }
     ];
     
     showModal(`
-        <div style="padding:10px;max-height:75vh;overflow-y:auto;">
-            <h3>🏪 Own Your Store on ONESHOPLIFY</h3>
-            <p style="color:#666;margin:10px 0;font-size:14px;">Create your own store, add products, sell tickets, and grow your business!</p>
+        <div style="padding:15px;max-height:80vh;overflow-y:auto;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:50px;margin-bottom:10px;">🏪</div>
+                <h3 style="margin:0;">Own Your Store on ONESHOPLIFY</h3>
+                <p style="color:#666;margin:8px 0;font-size:14px;">Create your store, add products, sell tickets & grow!</p>
+            </div>
             
-            <p style="font-size:13px;color:#666;margin-bottom:15px;">
-                Your Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
+            <p style="font-size:13px;color:#666;margin-bottom:15px;text-align:center;">
+                💰 Your Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong>
             </p>
             
             ${plans.map(plan => `
-                <div style="background:white;border-radius:12px;padding:18px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-left:4px solid ${plan.color};">
+                <div style="background:white;border-radius:14px;padding:20px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,0.06);border:2px solid ${plan.popular ? plan.color : '#e0e0e0'};position:relative;${plan.popular ? 'border-width:2px;' : ''}">
+                    ${plan.popular ? '<span style="position:absolute;top:-10px;right:20px;background:#FFD700;color:#1a1a1a;padding:4px 14px;border-radius:12px;font-size:11px;font-weight:700;">BEST VALUE</span>' : ''}
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <h4 style="margin:0;">${plan.icon} ${plan.name}</h4>
+                        <h4 style="margin:0;font-size:17px;">${plan.icon} ${plan.name}</h4>
                         ${plan.savings > 0 ? `<span style="background:#E8F5E9;color:#2E7D32;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;">Save $${plan.savings}</span>` : ''}
                     </div>
-                    <div style="font-size:28px;font-weight:800;color:${plan.color};margin:8px 0;">$${plan.price}</div>
-                    <p style="font-size:12px;color:#666;">per ${plan.period}</p>
-                    <ul style="list-style:none;padding:0;font-size:12px;color:#666;line-height:2;margin:10px 0;">
-                        <li>✅ Your own store link (yourstore.oneshoplify.com)</li>
-                        <li>✅ Add unlimited products</li>
-                        <li>✅ Sell tickets & events</li>
-                        <li>✅ Product sponsorship ($10/mo)</li>
-                        <li>✅ Discount codes</li>
-                        <li>✅ Store customization</li>
-                    </ul>
+                    <div style="font-size:32px;font-weight:800;color:${plan.color};margin:10px 0;">$${plan.price}</div>
+                    <p style="font-size:12px;color:#666;margin:0;">per ${plan.period}</p>
+                    
+                    <div style="background:#f9f9f9;padding:12px;border-radius:8px;margin:12px 0;">
+                        <p style="font-size:12px;font-weight:600;margin:0 0 8px;">What you get:</p>
+                        <ul style="list-style:none;padding:0;font-size:12px;color:#666;line-height:2;margin:0;">
+                            <li>✅ Store: yourname.oneshoplify.com</li>
+                            <li>✅ Add unlimited products</li>
+                            <li>✅ Sell tickets & events</li>
+                            <li>✅ Product sponsorship ($10/mo)</li>
+                            <li>✅ Discount codes</li>
+                            <li>✅ Store customization</li>
+                            <li>✅ Customer support</li>
+                        </ul>
+                    </div>
+                    
                     ${(APP.userProfile?.walletBalance || 0) >= plan.price ? `
-                        <button class="btn-gold btn-full" style="margin-top:8px;" onclick="subscribeToStore('${plan.name.toLowerCase()}', ${plan.price}, '${plan.period}')">
-                            💳 Subscribe - $${plan.price}
+                        <button class="btn-gold btn-full" style="padding:14px;font-size:15px;font-weight:700;" onclick="subscribeToStore('${plan.name.toLowerCase()}', ${plan.price}, '${plan.period}')">
+                            🚀 Start ${plan.name} Plan - $${plan.price}
                         </button>
                     ` : `
-                        <button class="btn-outline btn-full" style="margin-top:8px;opacity:0.5;" disabled>
-                            Need $${plan.price} (Balance: ${formatCurrency(APP.userProfile?.walletBalance || 0)})
-                        </button>
+                        <div style="background:#FFF3E0;padding:10px;border-radius:8px;text-align:center;margin-bottom:8px;">
+                            <p style="color:#E65100;font-size:12px;margin:0;">Need $${plan.price} · You have ${formatCurrency(APP.userProfile?.walletBalance || 0)}</p>
+                        </div>
+                        <button class="btn-outline btn-full" onclick="hideModal();navigateTo('wallet');">💰 Deposit Funds</button>
                     `}
                 </div>
             `).join('')}
-            
-            ${(APP.userProfile?.walletBalance || 0) < 5 ? `
-                <button class="btn-gold btn-full" style="margin-top:10px;" onclick="hideModal();navigateTo('wallet');">
-                    💰 Deposit Funds First
-                </button>
-            ` : ''}
-            
-            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
         </div>
     `);
 }
@@ -357,7 +380,6 @@ async function subscribeToStore(planName, price, period) {
         return;
     }
     
-    // Show store setup modal after payment
     showLoader();
     
     try {
@@ -395,9 +417,9 @@ async function subscribeToStore(planName, price, period) {
         });
         
         hideLoader();
-        showToast('Store subscription active! 🎉 Now set up your store.', 'success');
+        showToast('Store subscription active! 🎉 Set up your store now.', 'success');
         
-        // Show store setup
+        // Show store setup form
         setTimeout(() => {
             startStoreSetup();
         }, 500);
@@ -410,45 +432,48 @@ async function subscribeToStore(planName, price, period) {
 }
 
 // =====================
-// STORE SETUP (After Payment)
+// STORE SETUP FORM
 // =====================
 function startStoreSetup() {
     showModal(`
-        <div style="padding:15px;max-height:75vh;overflow-y:auto;">
-            <h3>🏪 Set Up Your Store</h3>
-            <p style="color:#666;margin:10px 0;">Fill in your store details</p>
+        <div style="padding:15px;max-height:80vh;overflow-y:auto;">
+            <div style="text-align:center;margin-bottom:15px;">
+                <div style="font-size:40px;">🏪</div>
+                <h3>Set Up Your Store</h3>
+                <p style="color:#666;">Fill in your store details below</p>
+            </div>
             
             <div class="input-group" style="margin-top:15px;">
                 <label>Store Name *</label>
-                <input type="text" id="setup-store-name" class="input-field" placeholder="My Store Name" value="${APP.userProfile.storeName || ''}">
+                <input type="text" id="setup-store-name" class="input-field" placeholder="My Awesome Store" value="${APP.userProfile.storeName || ''}">
             </div>
             
             <div class="input-group" style="margin-top:10px;">
-                <label>Store Description (10-100 words)</label>
-                <textarea id="setup-store-desc" class="input-field" rows="3" placeholder="Describe your store...">${APP.userProfile.storeDescription || ''}</textarea>
+                <label>Store Description</label>
+                <textarea id="setup-store-desc" class="input-field" rows="3" placeholder="Describe what your store sells...">${APP.userProfile.storeDescription || ''}</textarea>
                 <small style="color:#999;" id="word-count">0 words</small>
             </div>
             
             <div class="input-group" style="margin-top:10px;">
-                <label>Store Category</label>
+                <label>Store Category *</label>
                 <select id="setup-store-category" class="input-field">
                     <option value="">Select Category</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Home & Garden">Home & Garden</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Beauty">Beauty</option>
-                    <option value="Toys">Toys</option>
-                    <option value="Food & Drinks">Food & Drinks</option>
-                    <option value="Tickets & Events">Tickets & Events</option>
-                    <option value="All Purpose Store">All Purpose Store</option>
-                    <option value="Digital Products">Digital Products</option>
-                    <option value="Services">Services</option>
+                    <option value="Fashion">👗 Fashion</option>
+                    <option value="Electronics">🔌 Electronics</option>
+                    <option value="Home & Garden">🏠 Home & Garden</option>
+                    <option value="Sports">⚽ Sports</option>
+                    <option value="Beauty">💄 Beauty</option>
+                    <option value="Toys">🧸 Toys</option>
+                    <option value="Food & Drinks">🍔 Food & Drinks</option>
+                    <option value="Tickets & Events">🎫 Tickets & Events</option>
+                    <option value="All Purpose Store">🛍️ All Purpose Store</option>
+                    <option value="Digital Products">💻 Digital Products</option>
+                    <option value="Services">🔧 Services</option>
                 </select>
             </div>
             
             <div class="input-group" style="margin-top:10px;">
-                <label>Store Country</label>
+                <label>Store Country *</label>
                 <select id="setup-store-country" class="input-field">
                     <option value="">Select Country</option>
                     ${typeof COUNTRIES !== 'undefined' ? Object.entries(COUNTRIES).sort((a,b) => a[1].name.localeCompare(b[1].name)).map(([code, data]) => `<option value="${code}" ${APP.userProfile.country === code ? 'selected' : ''}>${data.flag||''} ${data.name}</option>`).join('') : ''}
@@ -456,18 +481,18 @@ function startStoreSetup() {
             </div>
             
             <div class="input-group" style="margin-top:10px;">
-                <label>Industrial UID (from ONESHOPLIFY Wallet - optional for now)</label>
-                <input type="text" id="setup-industrial-uid" class="input-field" placeholder="Enter UID or skip" value="${APP.userProfile.industrialUid || ''}">
-                <small style="color:#999;">Get this from ONESHOPLIFY Wallet → Profile → Store & Gateway</small>
+                <label>Industrial UID (from ONESHOPLIFY Wallet)</label>
+                <input type="text" id="setup-industrial-uid" class="input-field" placeholder="Enter UID or skip for now" value="${APP.userProfile.industrialUid || ''}">
+                <small style="color:#999;">Optional - Get from Wallet → Profile → Store & Gateway</small>
             </div>
             
             <div class="input-group" style="margin-top:10px;">
-                <label>Store Logo (Upload)</label>
+                <label>Store Logo</label>
                 <input type="file" id="setup-store-logo" class="input-field" accept="image/*">
             </div>
             
             <div class="input-group" style="margin-top:10px;">
-                <label>Store Banner (Upload)</label>
+                <label>Store Banner</label>
                 <input type="file" id="setup-store-banner" class="input-field" accept="image/*">
             </div>
             
@@ -478,27 +503,34 @@ function startStoreSetup() {
             
             <label style="display:flex;align-items:start;gap:8px;margin-top:15px;cursor:pointer;">
                 <input type="checkbox" id="setup-fulfill" style="width:18px;height:18px;margin-top:3px;">
-                <span style="font-size:13px;">I confirm I will fulfill all orders</span>
+                <span style="font-size:13px;">I confirm I will fulfill all orders placed through my store</span>
             </label>
             
             <label style="display:flex;align-items:start;gap:8px;margin-top:8px;cursor:pointer;">
                 <input type="checkbox" id="setup-terms" style="width:18px;height:18px;margin-top:3px;">
-                <span style="font-size:13px;">I agree to ONESHOPLIFY Store Terms</span>
+                <span style="font-size:13px;">I agree to ONESHOPLIFY Store Terms & Conditions</span>
             </label>
             
-            <button class="btn-gold btn-full" style="margin-top:15px;" onclick="completeStoreSetup()">🚀 Launch My Store</button>
+            <button class="btn-gold btn-full" style="margin-top:15px;padding:14px;font-size:16px;" onclick="completeStoreSetup()">
+                🚀 Launch My Store
+            </button>
         </div>
     `);
     
-    // Word count
-    const descEl = document.getElementById('setup-store-desc');
-    if (descEl) {
-        descEl.addEventListener('input', function() {
-            const words = this.value.trim().split(/\s+/).filter(w => w.length > 0);
+    // Word counter
+    setTimeout(() => {
+        const descEl = document.getElementById('setup-store-desc');
+        if (descEl) {
+            const words = descEl.value.trim().split(/\s+/).filter(w => w.length > 0);
             const countEl = document.getElementById('word-count');
             if (countEl) countEl.textContent = words.length + ' words';
-        });
-    }
+            
+            descEl.addEventListener('input', function() {
+                const w = this.value.trim().split(/\s+/).filter(x => x.length > 0);
+                if (countEl) countEl.textContent = w.length + ' words';
+            });
+        }
+    }, 300);
 }
 
 async function completeStoreSetup() {
@@ -551,9 +583,7 @@ async function completeStoreSetup() {
         hideLoader();
         
         const storeUrl = `https://${APP.userProfile.username}.oneshoplify.com`;
-        showToast(`Store created! 🎉 ${storeUrl}`, 'success');
-        
-        // Reload profile
+        showToast(`🎉 Store created! ${storeUrl}`, 'success');
         loadProfileScreen();
         
     } catch (e) {
@@ -570,43 +600,16 @@ function openStoreDashboard() {
     if (typeof loadStoreOwnerDashboard === 'function') {
         navigateTo('merchant');
         setTimeout(() => loadStoreOwnerDashboard(), 300);
-    } else if (typeof loadMerchantDashboard === 'function') {
-        navigateTo('merchant');
     } else {
         navigateTo('merchant');
     }
 }
 
 // =====================
-// RENEW STORE SUBSCRIPTION
+// RENEW STORE
 // =====================
 function renewStoreSubscription() {
-    const plans = [
-        { name: 'Monthly', price: 5, period: 'month' },
-        { name: '3 Months', price: 13.50, period: 'quarter', savings: 1.50 },
-        { name: '6 Months', price: 24, period: 'biannual', savings: 6 },
-        { name: 'Annual', price: 45, period: 'annual', savings: 15 }
-    ];
-    
-    showModal(`
-        <div style="padding:10px;">
-            <h3>🔄 Renew Store</h3>
-            <p style="color:#666;margin:10px 0;">Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong></p>
-            ${plans.map(p => `
-                <div style="padding:15px;border-left:4px solid #667eea;margin:10px 0;background:white;border-radius:8px;">
-                    <h4>${p.name}</h4>
-                    <div style="font-size:24px;font-weight:800;">$${p.price}</div>
-                    ${p.savings ? `<p style="color:#4CAF50;">Save $${p.savings}</p>` : ''}
-                    ${(APP.userProfile?.walletBalance || 0) >= p.price ? `
-                        <button class="btn-gold btn-full" onclick="subscribeToStore('${p.name.toLowerCase()}', ${p.price}, '${p.period}')">Select</button>
-                    ` : `
-                        <button class="btn-outline btn-full" disabled>Need $${p.price}</button>
-                    `}
-                </div>
-            `).join('')}
-            <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
-        </div>
-    `);
+    showStorePlans();
 }
 
 // =====================
@@ -621,11 +624,14 @@ function showDropshipPlans() {
     
     showModal(`
         <div style="padding:10px;max-height:70vh;overflow-y:auto;">
-            <h3>📦 Choose Dropship Plan</h3>
-            <p style="color:#666;margin-bottom:15px;">Resell products without inventory</p>
+            <div style="text-align:center;margin-bottom:15px;">
+                <div style="font-size:40px;">📦</div>
+                <h3>Become a Dropshipper</h3>
+                <p style="color:#666;">Resell products without inventory</p>
+            </div>
             <p style="font-size:13px;">Balance: <strong>${formatCurrency(APP.userProfile?.walletBalance || 0)}</strong></p>
             ${plans.map(plan => `
-                <div class="plan-card" style="border-left:4px solid ${plan.color};margin:10px 0;">
+                <div style="background:white;border-radius:12px;padding:18px;margin:10px 0;box-shadow:0 2px 6px rgba(0,0,0,0.04);border-left:4px solid ${plan.color};">
                     <h4>${plan.icon} ${plan.name}</h4>
                     <div class="plan-price">$${plan.price}<span style="font-size:14px;">/mo</span></div>
                     ${(APP.userProfile?.walletBalance || 0) >= plan.price ? `
@@ -647,8 +653,7 @@ async function payDropshipSubscription(plan, price) {
         const d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         await db.collection('users').doc(APP.userProfile.uid).update({
             walletBalance: firebase.firestore.FieldValue.increment(-price),
-            dropshipPlan: plan,
-            isDropshipper: true,
+            dropshipPlan: plan, isDropshipper: true,
             dropshipPlanExpiry: firebase.firestore.Timestamp.fromDate(d),
             dropshipVerified: plan === 'enterprise'
         });
@@ -656,17 +661,11 @@ async function payDropshipSubscription(plan, price) {
         APP.userProfile.dropshipPlan = plan;
         APP.userProfile.isDropshipper = true;
         if (plan === 'enterprise') APP.userProfile.dropshipVerified = true;
-        
         await db.collection('transactions').add({
             userId: APP.userProfile.uid, type: 'subscription', amount: price,
-            currency: 'USD', status: 'completed',
-            description: `Dropship ${plan} plan`,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            currency: 'USD', status: 'completed', createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
-        hideLoader();
-        showToast(`Subscribed to ${plan}! 🎉`, 'success');
-        navigateTo('dropship');
+        hideLoader(); showToast(`Subscribed! 🎉`, 'success'); navigateTo('dropship');
     } catch (e) { hideLoader(); showToast('Failed', 'error'); }
 }
 
@@ -691,33 +690,19 @@ async function renewDropshipSubscription() {
 // INFLUENCER APPLICATION
 // =====================
 function showInfluencerApplication() {
-    if (APP.userProfile?.influencerStatus === 'pending') { showToast('Application under review', 'info'); return; }
+    if (APP.userProfile?.influencerStatus === 'pending') { showToast('Under review', 'info'); return; }
     if (APP.userProfile?.influencerStatus === 'approved') { showToast('Already approved', 'info'); return; }
-    if (APP.userProfile?.influencerStatus === 'rejected') { showToast('Rejected. Cannot reapply.', 'error'); return; }
-    if (APP.userProfile?.influencerStatus === 'suspended') { showToast('Account suspended.', 'error'); return; }
+    if (APP.userProfile?.influencerStatus === 'rejected') { showToast('Rejected', 'error'); return; }
+    if (APP.userProfile?.influencerStatus === 'suspended') { showToast('Suspended', 'error'); return; }
     
     showModal(`
-        <div style="padding:10px;max-height:70vh;overflow-y:auto;">
-            <h3>🤝 Apply as Influencer</h3>
-            <div style="background:#f5f5f5;padding:15px;border-radius:8px;margin:15px 0;font-size:13px;line-height:1.8;">
-                <p><strong>Terms:</strong></p>
-                <p>1. Name must match social media</p>
-                <p>2. 3 reports = 2-week suspension</p>
-                <p>3. 2 suspensions = permanent ban</p>
-                <p>4. Earn 5% commission on campaigns</p>
-                <p>5. Verified influencers earn $1/sale</p>
-                <p>6. Fee: $1/month</p>
+        <div style="padding:10px;">
+            <div style="text-align:center;margin-bottom:10px;"><div style="font-size:40px;">🤝</div><h3>Apply as Influencer</h3></div>
+            <div style="background:#f5f5f5;padding:15px;border-radius:8px;margin:10px 0;font-size:12px;line-height:1.8;">
+                <p><strong>Terms:</strong></p><p>1. Name must match social media</p><p>2. 3 reports = suspension</p><p>3. 2 suspensions = ban</p><p>4. 5% commission</p><p>5. Fee: $1/month</p>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:15px;">
-                <input type="checkbox" id="agree-influencer-terms" style="width:18px;height:18px;">
-                <span style="font-size:14px;">I agree</span>
-            </label>
-            ${(APP.userProfile?.walletBalance || 0) >= APP.advertiserPrice ? `
-                <button class="btn-gold btn-full" onclick="proceedToInfluencerApplication()">💳 Pay $${APP.advertiserPrice} & Apply</button>
-            ` : `
-                <div style="background:#FFEBEE;padding:12px;border-radius:8px;margin-bottom:10px;"><p style="color:#C62828;">Need $${APP.advertiserPrice}</p></div>
-                <button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">💰 Deposit</button>
-            `}
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:10px 0;"><input type="checkbox" id="agree-influencer-terms" style="width:18px;height:18px;"><span style="font-size:13px;">I agree</span></label>
+            ${(APP.userProfile?.walletBalance||0)>=APP.advertiserPrice?`<button class="btn-gold btn-full" onclick="proceedToInfluencerApplication()">💳 Pay $${APP.advertiserPrice} & Apply</button>`:`<div style="background:#FFEBEE;padding:10px;border-radius:8px;margin:8px 0;"><p style="color:#C62828;font-size:12px;">Need $${APP.advertiserPrice}</p></div><button class="btn-gold btn-full" onclick="hideModal();navigateTo('wallet');">💰 Deposit</button>`}
             <button class="btn-outline btn-full" style="margin-top:8px;" onclick="hideModal()">Cancel</button>
         </div>
     `);
@@ -772,31 +757,26 @@ function loadInfluencerApplication() {
             <button class="btn-outline btn-full" style="margin-top:8px;" onclick="saveInfluencerDraft()">💾 Save Draft</button>
         </div>
     `;
-    
     window._influencerPlatforms = savedData.platforms || [];
 }
 
-function toggleInfluencerPlatform(platformId) {
+function toggleInfluencerPlatform(id) {
     if (!window._influencerPlatforms) window._influencerPlatforms = [];
-    const idx = window._influencerPlatforms.indexOf(platformId);
+    const idx = window._influencerPlatforms.indexOf(id);
     if (idx >= 0) window._influencerPlatforms.splice(idx, 1);
-    else window._influencerPlatforms.push(platformId);
-    const el = document.getElementById('inf-platform-' + platformId);
-    if (el) {
-        const sel = window._influencerPlatforms.includes(platformId);
-        el.style.borderColor = sel ? '#FFD700' : '#e0e0e0';
-        el.style.background = sel ? '#FFFDE7' : 'white';
-    }
+    else window._influencerPlatforms.push(id);
+    const el = document.getElementById('inf-platform-' + id);
+    if (el) { const s = window._influencerPlatforms.includes(id); el.style.borderColor = s?'#FFD700':'#e0e0e0'; el.style.background = s?'#FFFDE7':'white'; }
 }
 
 function previewInfluencerScreenshot() {
-    const file = document.getElementById('inf-screenshot')?.files?.[0];
-    const container = document.getElementById('inf-screenshot-preview');
-    if (!container || !file) return;
-    window._influencerScreenshot = file;
-    const reader = new FileReader();
-    reader.onload = e => { container.innerHTML = `<img src="${e.target.result}" style="width:100%;max-height:200px;border-radius:8px;">`; };
-    reader.readAsDataURL(file);
+    const f = document.getElementById('inf-screenshot')?.files?.[0];
+    const c = document.getElementById('inf-screenshot-preview');
+    if (!c || !f) return;
+    window._influencerScreenshot = f;
+    const r = new FileReader();
+    r.onload = e => { c.innerHTML = `<img src="${e.target.result}" style="width:100%;max-height:200px;border-radius:8px;">`; };
+    r.readAsDataURL(f);
 }
 
 async function submitInfluencerApplication() {
@@ -805,40 +785,25 @@ async function submitInfluencerApplication() {
     const bio = document.getElementById('inf-bio')?.value?.trim();
     const phone = document.getElementById('inf-phone')?.value?.trim();
     const platforms = window._influencerPlatforms || [];
-    
     if (!name) { showToast('Enter name', 'error'); return; }
     if (!phone) { showToast('Enter phone', 'error'); return; }
     if (platforms.length === 0) { showToast('Select platform', 'error'); return; }
-    if ((APP.userProfile?.walletBalance || 0) < APP.advertiserPrice) { showToast('Insufficient balance', 'error'); navigateTo('wallet'); return; }
-    
+    if ((APP.userProfile?.walletBalance||0) < APP.advertiserPrice) { showToast('Insufficient balance', 'error'); navigateTo('wallet'); return; }
     showLoader();
     try {
-        let screenshotUrl = APP.userProfile?.influencerDraft?.screenshotUrl || '';
-        if (window._influencerScreenshot) screenshotUrl = await uploadToCloudinary(window._influencerScreenshot);
-        
+        let ss = APP.userProfile?.influencerDraft?.screenshotUrl || '';
+        if (window._influencerScreenshot) ss = await uploadToCloudinary(window._influencerScreenshot);
         await db.collection('users').doc(APP.userProfile.uid).update({
             walletBalance: firebase.firestore.FieldValue.increment(-APP.advertiserPrice),
-            influencerStatus: 'pending',
-            influencerName: name, influencerNiche: niche, influencerBio: bio,
-            influencerPhone: phone, influencerPlatforms: platforms,
-            influencerScreenshot: screenshotUrl,
-            influencerReports: 0, influencerSuspensions: 0, influencerVerified: false,
-            influencerAppliedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            influencerDraft: null
+            influencerStatus: 'pending', influencerName: name, influencerNiche: niche,
+            influencerBio: bio, influencerPhone: phone, influencerPlatforms: platforms,
+            influencerScreenshot: ss, influencerReports: 0, influencerSuspensions: 0,
+            influencerVerified: false, influencerAppliedAt: firebase.firestore.FieldValue.serverTimestamp(), influencerDraft: null
         });
-        
         APP.userProfile.walletBalance -= APP.advertiserPrice;
         APP.userProfile.influencerStatus = 'pending';
-        
-        await db.collection('transactions').add({
-            userId: APP.userProfile.uid, type: 'subscription', amount: APP.advertiserPrice,
-            currency: 'USD', status: 'completed', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        if (typeof createNotification === 'function') {
-            await createNotification('admin', 'New Influencer', `${name} applied.`, '🤝', 'customerservice');
-        }
-        
+        await db.collection('transactions').add({ userId: APP.userProfile.uid, type: 'subscription', amount: APP.advertiserPrice, currency: 'USD', status: 'completed', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        if (typeof createNotification === 'function') await createNotification('admin', 'New Influencer', `${name} applied.`, '🤝', 'customerservice');
         hideLoader(); showToast('Submitted! ✅', 'success'); navigateTo('profile');
     } catch (e) { hideLoader(); showToast('Failed', 'error'); }
 }
@@ -849,169 +814,113 @@ async function saveInfluencerDraft() {
     const bio = document.getElementById('inf-bio')?.value?.trim();
     const phone = document.getElementById('inf-phone')?.value?.trim();
     const platforms = window._influencerPlatforms || [];
-    try {
-        await db.collection('users').doc(APP.userProfile.uid).update({
-            influencerDraft: { name, niche, bio, phone, platforms }
-        });
-        showToast('Draft saved! ✅', 'success');
-    } catch (e) { showToast('Failed', 'error'); }
+    try { await db.collection('users').doc(APP.userProfile.uid).update({ influencerDraft: { name, niche, bio, phone, platforms } }); showToast('Draft saved! ✅', 'success'); }
+    catch (e) { showToast('Failed', 'error'); }
 }
 
 // =====================
-// PROFILE PICTURE UPLOAD
+// PROFILE PICTURE
 // =====================
 async function uploadProfilePicture(event) {
     const file = event.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB', 'error'); return; }
+    if (!file || file.size > 5*1024*1024) { showToast(file?'Max 5MB':'No file','error'); return; }
     showLoader();
     try {
         const url = await uploadToCloudinary(file);
         await db.collection('users').doc(APP.userProfile.uid).update({ photoURL: url });
         APP.userProfile.photoURL = url;
         document.getElementById('profile-avatar-img').src = url;
-        const hdr = document.getElementById('header-avatar'); if (hdr) hdr.src = url;
+        const h = document.getElementById('header-avatar'); if (h) h.src = url;
         hideLoader(); showToast('Updated! 📷', 'success');
     } catch (e) { hideLoader(); showToast('Failed', 'error'); }
 }
 
 // =====================
-// SETTINGS SCREEN
+// SETTINGS
 // =====================
 async function loadSettingsScreen() {
-    const container = document.getElementById('settings-content');
-    if (!container || !APP.userProfile) return;
-    
-    const countryOptions = typeof COUNTRIES !== 'undefined' ? 
-        Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name))
-            .map(([code, data]) => `<option value="${code}" ${APP.userProfile.country === code ? 'selected' : ''}>${data.flag || ''} ${data.name}</option>`).join('') : '';
-    
-    container.innerHTML = `
+    const c = document.getElementById('settings-content');
+    if (!c || !APP.userProfile) return;
+    const co = typeof COUNTRIES !== 'undefined' ? Object.entries(COUNTRIES).sort((a,b) => a[1].name.localeCompare(b[1].name)).map(([code, data]) => `<option value="${code}" ${APP.userProfile.country===code?'selected':''}>${data.flag||''} ${data.name}</option>`).join('') : '';
+    c.innerHTML = `
         <div style="padding:20px;">
             <h3>👤 Account</h3>
-            <div class="input-group"><label>Username</label><input type="text" id="settings-username" class="input-field" value="${APP.userProfile.username || ''}"></div>
-            <div class="input-group"><label>Display Name</label><input type="text" id="settings-displayname" class="input-field" value="${APP.userProfile.displayName || ''}"></div>
-            <div class="input-group"><label>Email</label><input type="email" id="settings-email" class="input-field" value="${APP.userProfile.email || ''}"></div>
-            <div class="input-group"><label>Phone</label><div class="phone-input-wrapper"><span class="country-code-display" id="settings-country-code">${COUNTRIES?.[APP.userProfile.country]?.code || '+1'}</span><input type="tel" id="settings-phone" class="input-field phone-input" value="${(APP.userProfile.phoneNumber || '').replace(COUNTRIES?.[APP.userProfile.country]?.code || '+1', '')}"></div></div>
-            <div class="input-group"><label>Country</label><select id="settings-country" class="input-field" onchange="updateSettingsCountryCode()">${countryOptions}</select></div>
+            <div class="input-group"><label>Username</label><input type="text" id="settings-username" class="input-field" value="${APP.userProfile.username||''}"></div>
+            <div class="input-group"><label>Display Name</label><input type="text" id="settings-displayname" class="input-field" value="${APP.userProfile.displayName||''}"></div>
+            <div class="input-group"><label>Email</label><input type="email" id="settings-email" class="input-field" value="${APP.userProfile.email||''}"></div>
+            <div class="input-group"><label>Phone</label><div class="phone-input-wrapper"><span class="country-code-display" id="settings-country-code">${COUNTRIES?.[APP.userProfile.country]?.code||'+1'}</span><input type="tel" id="settings-phone" class="input-field phone-input" value="${(APP.userProfile.phoneNumber||'').replace(COUNTRIES?.[APP.userProfile.country]?.code||'+1','')}"></div></div>
+            <div class="input-group"><label>Country</label><select id="settings-country" class="input-field" onchange="updateSettingsCountryCode()">${co}</select></div>
             <div class="input-group"><label>New Password</label><input type="password" id="settings-password" class="input-field" placeholder="Leave blank"></div>
             <button class="btn-gold btn-full" style="margin-top:15px;" onclick="saveSettings()">💾 Save</button>
-            
             <h3 style="margin-top:25px;">🎨 Appearance</h3>
             <div class="setting-item"><span>Theme</span><div><button class="theme-btn ${APP.userProfile.theme==='light'?'active':''}" onclick="setThemeSetting('light')">☀️</button><button class="theme-btn ${APP.userProfile.theme==='dark'?'active':''}" onclick="setThemeSetting('dark')">🌙</button></div></div>
             <div class="setting-item"><span>Text Size</span><div class="text-size-controls"><button class="theme-btn ${APP.userProfile.textSize==='small'?'active':''}" onclick="setTextSizeSetting('small')">S</button><button class="theme-btn ${APP.userProfile.textSize==='medium'?'active':''}" onclick="setTextSizeSetting('medium')">M</button><button class="theme-btn ${APP.userProfile.textSize==='large'?'active':''}" onclick="setTextSizeSetting('large')">L</button></div></div>
-            
             <h3 style="margin-top:25px;">✅ Verification</h3>
-            ${APP.userProfile.isAppVerified ? `<div style="background:#E8F5E9;padding:15px;border-radius:8px;text-align:center;"><p style="font-size:30px;">✅</p><p>App Verified</p></div>` : APP.userProfile.appVerificationApplied ? `<div style="background:#FFF8E1;padding:15px;border-radius:8px;text-align:center;"><p>⏳ In progress...</p></div>` : `
-                <p style="color:#666;">Requirements: ${APP.verifyMinSales} sales, ${APP.verifyMinReferrals} referrals, $${APP.verifyMinEarnings} earned</p>
-                <div class="input-group"><label>Full Name</label><input type="text" id="verify-name" class="input-field"></div>
-                <div class="input-group"><label>Date of Birth</label><input type="date" id="verify-dob" class="input-field"></div>
-                <button class="btn-outline btn-full" style="margin-top:15px;" onclick="applyForVerification()">Apply</button>
-            `}
-            
-            <h3 style="margin-top:25px;">ℹ️ About</h3>
-            <p style="color:#666;">ONESHOPLIFY Enterprise v${APP.version}</p>
-            <p style="color:#666;">Powered by Rev</p>
+            ${APP.userProfile.isAppVerified?'<div style="background:#E8F5E9;padding:15px;border-radius:8px;text-align:center;"><p style="font-size:30px;">✅</p><p>App Verified</p></div>':APP.userProfile.appVerificationApplied?'<div style="background:#FFF8E1;padding:15px;border-radius:8px;text-align:center;"><p>⏳ In progress...</p></div>':`<p style="color:#666;">Requirements: ${APP.verifyMinSales} sales, ${APP.verifyMinReferrals} referrals, $${APP.verifyMinEarnings} earned</p><div class="input-group"><label>Full Name</label><input type="text" id="verify-name" class="input-field"></div><div class="input-group"><label>Date of Birth</label><input type="date" id="verify-dob" class="input-field"></div><button class="btn-outline btn-full" style="margin-top:15px;" onclick="applyForVerification()">Apply</button>`}
+            <h3 style="margin-top:25px;">ℹ️ About</h3><p style="color:#666;">ONESHOPLIFY Enterprise v${APP.version}</p><p style="color:#666;">Powered by Rev</p>
         </div>`;
 }
 
-function updateSettingsCountryCode() {
-    const c = document.getElementById('settings-country')?.value;
-    const d = document.getElementById('settings-country-code');
-    if (d && c && COUNTRIES?.[c]) d.textContent = COUNTRIES[c].code || '+1';
-}
+function updateSettingsCountryCode() { const c = document.getElementById('settings-country')?.value; const d = document.getElementById('settings-country-code'); if (d && c && COUNTRIES?.[c]) d.textContent = COUNTRIES[c].code || '+1'; }
 
 async function saveSettings() {
-    const username = document.getElementById('settings-username')?.value?.trim()?.toLowerCase();
-    const displayName = document.getElementById('settings-displayname')?.value?.trim();
-    const email = document.getElementById('settings-email')?.value?.trim();
-    const phone = document.getElementById('settings-phone')?.value?.trim();
-    const country = document.getElementById('settings-country')?.value;
-    const password = document.getElementById('settings-password')?.value;
-    
-    if (username && !/^[a-z0-9]{3,30}$/.test(username)) { showToast('Invalid username', 'error'); return; }
-    if (username && username !== APP.userProfile.username) {
-        try {
-            const check = await db.collection('users').where('username', '==', username).limit(1).get();
-            if (!check.empty) { showToast('Username taken', 'error'); return; }
-        } catch (e) { showToast('Could not verify', 'error'); return; }
-    }
-    
+    const u = document.getElementById('settings-username')?.value?.trim()?.toLowerCase();
+    const dn = document.getElementById('settings-displayname')?.value?.trim();
+    const e = document.getElementById('settings-email')?.value?.trim();
+    const p = document.getElementById('settings-phone')?.value?.trim();
+    const c = document.getElementById('settings-country')?.value;
+    const pw = document.getElementById('settings-password')?.value;
+    if (u && !/^[a-z0-9]{3,30}$/.test(u)) { showToast('Invalid username','error'); return; }
+    if (u && u !== APP.userProfile.username) { try { const ch = await db.collection('users').where('username','==',u).limit(1).get(); if (!ch.empty) { showToast('Username taken','error'); return; } } catch (ex) { showToast('Could not verify','error'); return; } }
     showLoader();
     try {
-        const updates = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-        if (username) updates.username = username;
-        if (displayName) updates.displayName = displayName;
-        if (email) updates.email = email;
-        if (country && COUNTRIES?.[country]) {
-            updates.country = country;
-            updates.countryFlag = COUNTRIES[country].flag || '';
-            updates.currency = COUNTRIES[country].currency || 'USD';
-        }
-        if (phone) updates.phoneNumber = (COUNTRIES?.[country || APP.userProfile.country]?.code || '+1') + phone;
-        if (password && password.length >= 6) updates.password = password;
-        
-        await db.collection('users').doc(APP.userProfile.uid).update(updates);
-        Object.assign(APP.userProfile, updates);
-        hideLoader(); showToast('Saved! ✅', 'success');
-    } catch (e) { hideLoader(); showToast('Failed', 'error'); }
+        const up = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+        if (u) up.username = u; if (dn) up.displayName = dn; if (e) up.email = e;
+        if (c && COUNTRIES?.[c]) { up.country = c; up.countryFlag = COUNTRIES[c].flag||''; up.currency = COUNTRIES[c].currency||'USD'; }
+        if (p) up.phoneNumber = (COUNTRIES?.[c||APP.userProfile.country]?.code||'+1') + p;
+        if (pw && pw.length >= 6) up.password = pw;
+        await db.collection('users').doc(APP.userProfile.uid).update(up);
+        Object.assign(APP.userProfile, up);
+        hideLoader(); showToast('Saved! ✅','success');
+    } catch (ex) { hideLoader(); showToast('Failed','error'); }
 }
 
-function setThemeSetting(theme) {
-    APP.userProfile.theme = theme;
-    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.theme-btn').forEach(b => { if (b.textContent.includes(theme==='light'?'☀️':'🌙')) b.classList.add('active'); });
-    document.body.classList.toggle('dark-theme', theme === 'dark');
-    db.collection('users').doc(APP.userProfile.uid).update({ theme }).catch(() => {});
+function setThemeSetting(t) {
+    APP.userProfile.theme = t;
+    document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.theme-btn').forEach(b=>{if(b.textContent.includes(t==='light'?'☀️':'🌙'))b.classList.add('active');});
+    document.body.classList.toggle('dark-theme',t==='dark');
+    db.collection('users').doc(APP.userProfile.uid).update({theme:t}).catch(()=>{});
 }
 
-function setTextSizeSetting(size) {
-    APP.userProfile.textSize = size;
-    document.querySelectorAll('.text-size-controls .theme-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.text-size-controls .theme-btn').forEach(b => { if (b.textContent === size.toUpperCase().substring(0,1)) b.classList.add('active'); });
-    document.body.style.fontSize = { small:'14px', medium:'16px', large:'18px' }[size];
-    db.collection('users').doc(APP.userProfile.uid).update({ textSize: size }).catch(() => {});
+function setTextSizeSetting(s) {
+    APP.userProfile.textSize = s;
+    document.querySelectorAll('.text-size-controls .theme-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.text-size-controls .theme-btn').forEach(b=>{if(b.textContent===s.toUpperCase().substring(0,1))b.classList.add('active');});
+    document.body.style.fontSize = {small:'14px',medium:'16px',large:'18px'}[s];
+    db.collection('users').doc(APP.userProfile.uid).update({textSize:s}).catch(()=>{});
 }
 
 async function applyForVerification() {
-    const name = document.getElementById('verify-name')?.value?.trim();
-    const dob = document.getElementById('verify-dob')?.value;
-    if (!name || !dob) { showToast('Fill all fields', 'error'); return; }
-    const sales = APP.userProfile.totalSales || 0;
-    const referrals = APP.userProfile.totalReferrals || 0;
-    const earnings = (APP.userProfile.affiliateEarnings || 0) + (APP.userProfile.totalRevenue || 0);
-    if (sales < APP.verifyMinSales) { showToast(`Need ${APP.verifyMinSales} sales`, 'error'); return; }
-    if (referrals < APP.verifyMinReferrals) { showToast(`Need ${APP.verifyMinReferrals} referrals`, 'error'); return; }
-    if (earnings < APP.verifyMinEarnings) { showToast(`Need $${APP.verifyMinEarnings}`, 'error'); return; }
-    
+    const n = document.getElementById('verify-name')?.value?.trim();
+    const d = document.getElementById('verify-dob')?.value;
+    if (!n||!d){showToast('Fill all','error');return;}
+    const s = APP.userProfile.totalSales||0, r = APP.userProfile.totalReferrals||0, e = (APP.userProfile.affiliateEarnings||0)+(APP.userProfile.totalRevenue||0);
+    if (s<APP.verifyMinSales){showToast(`Need ${APP.verifyMinSales} sales`,'error');return;}
+    if (r<APP.verifyMinReferrals){showToast(`Need ${APP.verifyMinReferrals} referrals`,'error');return;}
+    if (e<APP.verifyMinEarnings){showToast(`Need $${APP.verifyMinEarnings}`,'error');return;}
     try {
-        await db.collection('verification_requests').add({
-            userId: APP.userProfile.uid, name, dob, sales, referrals, earnings,
-            status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await db.collection('users').doc(APP.userProfile.uid).update({ appVerificationApplied: true });
+        await db.collection('verification_requests').add({userId:APP.userProfile.uid,name:n,dob:d,sales:s,referrals:r,earnings:e,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        await db.collection('users').doc(APP.userProfile.uid).update({appVerificationApplied:true});
         APP.userProfile.appVerificationApplied = true;
-        showToast('Submitted! ✅', 'success'); loadSettingsScreen();
-    } catch (e) { showToast('Failed', 'error'); }
+        showToast('Submitted! ✅','success'); loadSettingsScreen();
+    } catch(ex){showToast('Failed','error');}
 }
 
-// =====================
-// LOGOUT
-// =====================
 function confirmLogout() {
-    showModal(`
-        <h3>Logout</h3>
-        <p>Are you sure?</p>
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn-outline" style="flex:1;" onclick="hideModal()">Cancel</button>
-            <button class="btn-danger" style="flex:1;" onclick="performLogout()">Logout</button>
-        </div>
-    `);
+    showModal(`<h3>Logout</h3><p>Are you sure?</p><div style="display:flex;gap:10px;margin-top:20px;"><button class="btn-outline" style="flex:1;" onclick="hideModal()">Cancel</button><button class="btn-danger" style="flex:1;" onclick="performLogout()">Logout</button></div>`);
 }
 
-function performLogout() {
-    hideModal();
-    logout();
-}
+function performLogout() { hideModal(); logout(); }
 
 console.log('✅ profile.js fully loaded - ONESHOPLIFY Profile System Ready');
