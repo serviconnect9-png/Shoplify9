@@ -176,10 +176,11 @@
                     <button class="btn-outline" onclick="navigateTo('wallet')">Withdraw</button>
                 </div>
             </div>
-            <div class="ad-banner" id="ad-banner">
-                <button class="ad-close" onclick="closeAd()">×</button>
-                <div class="ad-content" id="ad-content"></div>
-            </div>
+            <!-- Ad Banner - Updated Structure -->
+   <div class="ad-banner" id="ad-banner">
+    <button class="ad-close" onclick="closeAd()">×</button>
+    <div class="ad-content" id="ad-content" onclick="openAdLink('')"></div>
+</div>
             <div class="section-header">
                 <h3>Sponsored Products</h3>
                 <span class="see-more" onclick="navigateTo('sponsored')">See More →</span>
