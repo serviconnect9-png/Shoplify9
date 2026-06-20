@@ -117,6 +117,18 @@ function handleScreenLoad(screen, data) {
             }
             break;
             
+       case 'storemarket':
+    if (typeof loadStoreMarket === 'function') loadStoreMarket();
+    break;
+
+case 'storeowner':
+    if (typeof loadStoreOwnerDashboard === 'function') loadStoreOwnerDashboard();
+    break;
+
+case 'store-shop':
+    // This is loaded by openStoreShop() which passes the username
+    break;
+            
         case 'product-detail':
             if (!data || !data.productId) {
                 var pid = sessionStorage.getItem('deep_link_product');
