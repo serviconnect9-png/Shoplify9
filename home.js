@@ -180,7 +180,7 @@ async function loadTopEarners() {
     const container = document.getElementById('top-earners');
     if (!container) return;
     
-    if (!APP.userProfile?.isAffiliate && !APP.userProfile?.isMerchant && !APP.userProfile?.isDropshipper) {
+    if (!APP.userProfile?.isStoreowner && !APP.userProfile?.isMerchant && !APP.userProfile?.isDropshipper) {
         container.innerHTML = '';
         return;
     }
@@ -190,9 +190,9 @@ async function loadTopEarners() {
         const all = [];
         snapshot.forEach(doc => all.push(doc.data()));
         
-        const topAff = all.filter(u => u.isAffiliate).sort((a,b) => (b.affiliateEarnings||0)-(a.affiliateEarnings||0)).slice(0,3);
+        const topdropship = all.filter(u => u.isDropship).sort((a,b) => (b.DropshipEarnings||0)-(a.dropshipEarnings||0)).slice(0,3);
         
-        container.innerHTML = '<h4 style="padding:0 0 8px;">🏆 Top Affiliates</h4>';
+        container.innerHTML = '<h4 style="padding:0 0 8px;">🏆 Top dropshipers</h4>';
         if (topAff.length === 0) container.innerHTML += '<p style="color:#999;">None yet</p>';
         else topAff.forEach((u,i) => {
             const m = ['👑','🥈','🥉'];
@@ -337,14 +337,14 @@ async function updateNotificationBadge() {
 function updateBottomNav() {
     document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
     
-    const affNav = document.getElementById('nav-affiliate');
-    const merchNav = document.getElementById('nav-merchant');
-    const dropNav = document.getElementById('nav-dropship');
-    
-    if(APP.userProfile){
-        if(affNav) affNav.style.display = APP.userProfile.isAffiliate?'flex':'none';
-        if(merchNav) merchNav.style.display = APP.userProfile.isMerchant?'flex':'none';
-        if(dropNav) dropNav.style.display = APP.userProfile.isDropshipper?'flex':'none';
+    // In updateBottomNav():
+const storeMarketNav = document.getElementById('nav-storemarket');
+const dropshipNav = document.getElementById('nav-dropship');
+const merchantNav = document.getElementById('nav-merchant');
+
+if (storeMarketNav) storeMarketNav.style.display = 'flex'; // Always visible
+if (dropshipNav) dropshipNav.style.display = APP.userProfile?.isDropshipper ? 'flex' : 'none';
+if (merchantNav) merchantNav.style.display = APP.userProfile?.isMerchant ? 'flex' : 'none';
     }
     
     const map = {home:0,marketplace:1,affiliate:2,dropship:2,merchant:3,orders:4};
