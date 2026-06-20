@@ -196,11 +196,12 @@
             <div class="products-grid" id="trending-products"></div>
         </div>
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="navigateTo('home')"><span>🏠</span>Home</button>
-            <button class="nav-item" onclick="navigateTo('marketplace')"><span>🛍️</span>Shop</button>
-            <button class="nav-item" id="nav-dropship" onclick="navigateTo('dropship')" style="display:none;"><span>📦</span>Dropship</button>
-            <button class="nav-item" id="nav-merchant" onclick="navigateTo('merchant')" style="display:none;"><span>🏪</span>Store</button>
-            <button class="nav-item" onclick="navigateTo('orders')"><span>📦</span>Orders</button>
+    <button class="nav-item active" onclick="navigateTo('home')"><span>🏠</span>Home</button>
+    <button class="nav-item" onclick="navigateTo('marketplace')"><span>🛍️</span>Shop</button>
+    <button class="nav-item" id="nav-storemarket" onclick="navigateTo('storemarket')"><span>🏬</span>Stores</button>
+    <button class="nav-item" id="nav-dropship" onclick="navigateTo('dropship')" style="display:none;"><span>🚚</span>Dropship</button>
+    <button class="nav-item" id="nav-merchant" onclick="navigateTo('merchant')" style="display:none;"><span>🛒</span>Sell</button>
+    <button class="nav-item" onclick="navigateTo('orders')"><span>📦</span>Orders</button>
         </nav>
     </div>
 
@@ -403,6 +404,32 @@
         </div>
         <div class="analytics-content" id="analytics-content"></div>
     </div>
+    <!-- ==================== STORE MARKET SCREEN ==================== -->
+<div id="screen-storemarket" class="screen hidden">
+    <div class="page-header">
+        <button class="back-btn" onclick="navigateTo('home')">←</button>
+        <h2>Store Market</h2>
+        <button class="icon-btn" onclick="navigateTo('checkout')" style="position:relative;margin-left:auto;">
+            🛒
+            <span id="cart-count-badge-sm" style="position:absolute;top:-5px;right:-5px;background:#FF4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700;">0</span>
+        </button>
+    </div>
+    <div class="storemarket-content" id="storemarket-content"></div>
+</div>
+
+<!-- ==================== STORE OWNER DASHBOARD SCREEN ==================== -->
+<div id="screen-storeowner" class="screen hidden">
+    <div class="page-header">
+        <button class="back-btn" onclick="navigateTo('profile')">←</button>
+        <h2>My Store</h2>
+    </div>
+    <div class="storeowner-content" id="storeowner-content"></div>
+</div>
+
+<!-- ==================== STORE SHOP VIEW (CUSTOMER VIEW) ==================== -->
+<div id="screen-store-shop" class="screen hidden">
+    <div class="store-shop-content" id="store-shop-content"></div>
+</div>
 
     <!-- ==================== CUSTOMER SERVICE SCREEN ==================== -->
     <div id="screen-customerservice" class="screen hidden">
