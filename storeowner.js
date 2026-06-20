@@ -1,919 +1,616 @@
-// storeowner.js - COMPLETE NEW FILE (Store Ownership, Ticket System, Product Management)
-console.log('✅ storeowner.js loaded - ONESHOPLIFY Store Ownership System');
+// storeowner.js - COMPLETE STORE OWNER SYSTEM (Independent Shops, Alibaba-style)
+console.log('✅ storeowner.js loaded - Store Market System');
 
 // =====================
-// STORE PLANS CONFIGURATION
+// STORE MARKET - Browse All Stores
 // =====================
-const STORE_PLANS = {
-    monthly: { name: 'Monthly', price: 5, period: 'month', savings: 0 },
-    quarterly: { name: '3 Months', price: 13.50, period: 'quarter', savings: 1.50 },
-    biannual: { name: '6 Months', price: 24, period: 'biannual', savings: 6 },
-    annual: { name: 'Annual', price: 45, period: 'annual', savings: 15 }
-};
-
-// =====================
-// STORE TYPES
-// =====================
-const STORE_TYPES = [
-    { id: 'individual', name: 'Individual Store', icon: '🏪', desc: 'Personal store for your products' },
-    { id: 'organization', name: 'Organization Store', icon: '🏢', desc: 'Business or company store' }
-];
-
-// =====================
-// STORE CATEGORIES
-// =====================
-const STORE_CATEGORIES = [
-    'Fashion', 'Electronics', 'Home & Garden', 'Sports', 'Beauty',
-    'Toys', 'Books', 'Food & Drinks', 'Health', 'Automotive',
-    'Jewelry', 'Art', 'Music', 'Pet Supplies', 'Office',
-    'Baby', 'Travel', 'Fitness', 'Gaming', 'Tickets & Events',
-    'All Purpose Store', 'Digital Products', 'Services'
-];
-
-// =====================
-// PRODUCT RANGES
-// =====================
-const PRODUCT_RANGES = [
-    { value: '1-10', label: '1 - 10 Products' },
-    { value: '10-50', label: '10 - 50 Products' },
-    { value: '50-100', label: '50 - 100 Products' },
-    { value: '100-500', label: '100 - 500 Products' }
-];
-
-// =====================
-// TICKET PRESERVATIONS
-// =====================
-const TICKET_PRESERVATIONS = [
-    { id: 'general', name: 'General Admission' },
-    { id: 'vip', name: 'VIP' },
-    { id: 'table_2', name: 'Table for 2' },
-    { id: 'table_4', name: 'Table for 4' },
-    { id: 'table_5', name: 'Table for 5' },
-    { id: 'table_10', name: 'Table for 10' },
-    { id: 'early_bird', name: 'Early Bird' },
-    { id: 'premium', name: 'Premium' }
-];
-
-// =====================
-// TICKET DELIVERY METHODS
-// =====================
-const TICKET_DELIVERY = [
-    { id: 'app', name: 'App Generated (Auto)', desc: 'App generates ticket IDs automatically' },
-    { id: 'owner', name: 'Store Owner (Manual)', desc: 'You send tickets via WhatsApp' }
-];
-
-// =====================
-// TICKET VISIBILITY
-// =====================
-const TICKET_VISIBILITY = [
-    { id: 'public', name: 'Public', desc: 'Visible to everyone in your store' },
-    { id: 'link_only', name: 'Link Only', desc: 'Only people with the link can see it' }
-];
-
-// =====================
-// LOAD STORE OWNER DASHBOARD
-// =====================
-async function loadStoreOwnerDashboard() {
-    console.log('🏪 Loading store owner dashboard...');
+async function loadStoreMarket() {
+    console.log('🏪 Loading Store Market...');
     
-    const container = document.getElementById('storeowner-content');
-    if (!container) {
-        // Try to find in merchant content or create a new section
-        const altContainer = document.getElementById('merchant-content');
-        if (altContainer) {
-            renderStoreOwnerInMerchant(altContainer);
+    const container = document.getElementById('storemarket-content');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loader-spinner"></div><p>Loading stores...</p></div>';
+    
+    try {
+        const snapshot = await db.collection('users')
+            .where('hasStore', '==', true)
+            .where('storeActive', '==', true)
+            .get();
+        
+        if (snapshot.empty) {
+            container.innerHTML = `
+                <div style="text-align:center;padding:60px;">
+                    <p style="font-size:50px;">🏪</p>
+                    <h3>No Stores Yet</h3>
+                    <p style="color:#666;">Be the first to open a store!</p>
+                    <button class="btn-gold" onclick="navigateTo('profile')">Open Your Store</button>
+                </div>`;
             return;
         }
-        console.error('❌ No container found for store owner');
-        return;
-    }
-    
-    container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loader-spinner"></div><p>Loading store dashboard...</p></div>';
-    
-    if (!APP.userProfile) {
-        container.innerHTML = '<p style="text-align:center;padding:60px;">Please login to access your store.</p>';
-        return;
-    }
-    
-    const hasStore = APP.userProfile.hasStore || APP.userProfile.isMerchant;
-    
-    if (hasStore) {
-        renderActiveStoreDashboard(container);
-    } else {
-        renderStoreSetupOptions(container);
-    }
-}
-
-function renderStoreOwnerInMerchant(container) {
-    const hasStore = APP.userProfile.hasStore || APP.userProfile.isMerchant;
-    
-    if (hasStore) {
-        renderActiveStoreDashboard(container);
-    } else {
+        
+        const stores = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            stores.push({
+                id: doc.id,
+                username: data.username,
+                storeName: data.storeName || data.username + "'s Store",
+                storeLogo: data.storeLogo || '/app-icon.png',
+                storeBanner: data.storeBanner || '',
+                storeCategory: data.storeCategory || 'General',
+                storeColor: data.storeColor || '#667eea',
+                storeDescription: data.storeDescription || '',
+                storeVerified: data.isAppVerified || false,
+                totalProducts: data.totalProducts || 0,
+                countryFlag: data.countryFlag || '🌍'
+            });
+        });
+        
         container.innerHTML = `
             <div style="padding:15px;">
-                <div style="text-align:center;padding:30px 20px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px;color:white;margin-bottom:15px;">
-                    <h2>🏪 Own Your Store</h2>
-                    <p style="opacity:0.9;">Create your own store on ONESHOPLIFY</p>
+                <div style="margin-bottom:15px;">
+                    <input type="text" id="store-search" class="input-field" placeholder="Search stores..." 
+                           oninput="searchStores()" style="background:#f5f5f5;border-radius:25px;padding:12px 20px;">
                 </div>
-                <button class="btn-gold btn-full" onclick="startStoreSetup()">🚀 Create My Store</button>
+                
+                <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:15px;padding-bottom:5px;" id="store-categories">
+                    <span class="category-chip active" onclick="filterStores('all')">All</span>
+                    <span class="category-chip" onclick="filterStores('Fashion')">Fashion</span>
+                    <span class="category-chip" onclick="filterStores('Electronics')">Electronics</span>
+                    <span class="category-chip" onclick="filterStores('Tickets & Events')">Tickets</span>
+                    <span class="category-chip" onclick="filterStores('All Purpose')">General</span>
+                </div>
+                
+                <div id="stores-grid">
+                    ${stores.map(store => `
+                        <div class="store-card" data-category="${store.storeCategory}" data-name="${store.storeName.toLowerCase()} ${store.username.toLowerCase()}"
+                             onclick="openStoreShop('${store.username}')"
+                             style="background:white;border-radius:16px;overflow:hidden;margin-bottom:15px;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;transition:transform 0.2s;">
+                            
+                            ${store.storeBanner ? `
+                                <div style="height:120px;background-image:url(${store.storeBanner});background-size:cover;background-position:center;"></div>
+                            ` : `
+                                <div style="height:120px;background:linear-gradient(135deg,${store.storeColor},#764ba2);"></div>
+                            `}
+                            
+                            <div style="padding:15px;display:flex;gap:12px;align-items:center;">
+                                <img src="${store.storeLogo}" style="width:55px;height:55px;border-radius:14px;object-fit:cover;margin-top:-40px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.1);" onerror="this.src='/app-icon.png'">
+                                <div style="flex:1;">
+                                    <div style="display:flex;align-items:center;gap:5px;">
+                                        <h4 style="margin:0;font-size:15px;">${store.storeName}</h4>
+                                        ${store.storeVerified ? '<span style="color:#20D5EC;">✓</span>' : ''}
+                                    </div>
+                                    <p style="font-size:12px;color:#666;margin:2px 0;">${store.storeCategory} · ${store.countryFlag}</p>
+                                    <p style="font-size:11px;color:#999;">${store.totalProducts} products</p>
+                                </div>
+                                <button class="btn-gold btn-small" style="padding:8px 14px;">Visit →</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>`;
+        
+    } catch (e) {
+        console.error('Store market error:', e);
+        container.innerHTML = '<p style="text-align:center;padding:60px;">Error loading stores</p>';
     }
 }
 
-function renderActiveStoreDashboard(container) {
+function searchStores() {
+    const query = document.getElementById('store-search')?.value?.toLowerCase() || '';
+    const cards = document.querySelectorAll('.store-card');
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        card.style.display = name.includes(query) ? '' : 'none';
+    });
+}
+
+function filterStores(category) {
+    document.querySelectorAll('#store-categories .category-chip').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const cards = document.querySelectorAll('.store-card');
+    cards.forEach(card => {
+        if (category === 'all') {
+            card.style.display = '';
+        } else {
+            card.style.display = card.dataset.category === category ? '' : 'none';
+        }
+    });
+}
+
+// =====================
+// STORE SHOP VIEW (Alibaba-style Customer View)
+// =====================
+async function openStoreShop(username) {
+    console.log('🏪 Opening shop:', username);
+    
+    navigateTo('store-shop');
+    
+    const container = document.getElementById('store-shop-content');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loader-spinner"></div><p>Loading shop...</p></div>';
+    
+    try {
+        const userSnap = await db.collection('users').where('username', '==', username).limit(1).get();
+        if (userSnap.empty) {
+            container.innerHTML = '<p style="text-align:center;padding:60px;">Store not found</p>';
+            return;
+        }
+        
+        const store = userSnap.docs[0].data();
+        const storeId = userSnap.docs[0].id;
+        
+        // Get store products
+        const productsSnap = await db.collection('products')
+            .where('merchantId', '==', storeId)
+            .where('status', '==', 'active')
+            .get();
+        
+        const products = [];
+        productsSnap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+        
+        const cart = JSON.parse(sessionStorage.getItem('shoplify_cart') || '[]');
+        const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        
+        const isLight = isColorLight(store.storeColor || '#667eea');
+        const textColor = isLight ? '#1a1a1a' : '#ffffff';
+        const subColor = isLight ? '#444' : 'rgba(255,255,255,0.8)';
+        
+        container.innerHTML = `
+            <div style="background:#f5f5f5;min-height:100vh;">
+                
+                <!-- ALIBABA-STYLE TOP BAR -->
+                <div style="position:sticky;top:0;z-index:100;background:white;padding:8px 15px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f0f0f0;">
+                    <button onclick="navigateTo('storemarket')" style="background:none;border:none;font-size:20px;cursor:pointer;">←</button>
+                    <div style="flex:1;display:flex;align-items:center;gap:8px;">
+                        <img src="${store.storeLogo || '/app-icon.png'}" style="width:28px;height:28px;border-radius:6px;">
+                        <span style="font-weight:700;font-size:15px;">${store.storeName || 'Store'}</span>
+                    </div>
+                    <button onclick="navigateTo('checkout')" style="background:none;border:none;font-size:22px;cursor:pointer;position:relative;">
+                        🛒
+                        ${cartCount > 0 ? `<span style="position:absolute;top:-3px;right:-3px;background:#FF4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;">${cartCount}</span>` : ''}
+                    </button>
+                    <button onclick="openShopProfile('${username}')" style="background:none;border:none;font-size:22px;cursor:pointer;">👤</button>
+                </div>
+                
+                <!-- STORE HEADER -->
+                ${store.storeBanner ? `<img src="${store.storeBanner}" style="width:100%;height:150px;object-fit:cover;">` : ''}
+                <div style="background:linear-gradient(135deg,${store.storeColor || '#667eea'},#764ba2);padding:20px;text-align:center;color:${textColor};">
+                    <img src="${store.storeLogo || '/app-icon.png'}" style="width:60px;height:60px;border-radius:16px;border:3px solid white;margin-bottom:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+                    <h2 style="margin:0;font-size:20px;">${store.storeName || 'Store'}</h2>
+                    ${store.storeVerified ? '<span style="background:#20D5EC;color:white;padding:3px 10px;border-radius:10px;font-size:10px;margin-top:4px;display:inline-block;">✓ Verified</span>' : ''}
+                    <p style="font-size:13px;margin:4px 0 0;color:${subColor};">${store.storeDescription || ''}</p>
+                    <p style="font-size:11px;color:${subColor};">${products.length} Products · ${store.storeCategory || 'Store'}</p>
+                </div>
+                
+                <!-- SEARCH WITHIN STORE -->
+                <div style="padding:10px 15px;background:white;">
+                    <input type="text" id="shop-search" class="input-field" placeholder="Search in this store..." 
+                           oninput="searchShopProducts()" style="background:#f5f5f5;border-radius:20px;padding:10px 16px;font-size:13px;">
+                </div>
+                
+                <!-- PRODUCTS GRID - ALIBABA STYLE -->
+                <div style="padding:10px;">
+                    ${products.length === 0 ? '<p style="text-align:center;padding:40px;color:#999;">No products yet</p>' : `
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="shop-products-grid">
+                            ${products.map(p => {
+                                const img = p.images?.[0] || '/app-icon.png';
+                                const isTicket = p.isTicket || p.category === 'Tickets & Events';
+                                const discount = p.discountCode ? 
+                                    `<span style="background:#FF4444;color:white;padding:2px 6px;border-radius:8px;font-size:9px;">-${p.discountCode.value}${p.discountCode.type==='percentage'?'%':'$'}</span>` : '';
+                                
+                                return `
+                                    <div class="shop-product-card" data-name="${p.name.toLowerCase()}"
+                                         onclick="viewShopProduct('${p.id}','${storeId}')"
+                                         style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04);cursor:pointer;transition:transform 0.2s;">
+                                        <div style="position:relative;">
+                                            <img src="${img}" style="width:100%;height:160px;object-fit:cover;" onerror="this.src='/app-icon.png'" loading="lazy">
+                                            ${discount ? `<span style="position:absolute;top:6px;left:6px;">${discount}</span>` : ''}
+                                            ${isTicket ? '<span style="position:absolute;top:6px;right:6px;background:#9C27B0;color:white;padding:2px 6px;border-radius:6px;font-size:9px;">🎫</span>' : ''}
+                                            ${p.sponsored ? '<span style="position:absolute;bottom:6px;left:6px;background:#FFD700;color:#1a1a1a;padding:2px 6px;border-radius:6px;font-size:9px;">⭐</span>' : ''}
+                                        </div>
+                                        <div style="padding:10px;">
+                                            <div style="font-weight:600;font-size:12px;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.name}</div>
+                                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                                <div style="font-weight:800;font-size:16px;color:#e44;">${formatCurrency(p.price)}</div>
+                                                <div style="font-size:10px;color:#999;">${p.totalSales||0} sold</div>
+                                            </div>
+                                            ${p.stock > 0 ? `<div style="font-size:10px;color:#4CAF50;">${p.stock} available</div>` : ''}
+                                        </div>
+                                    </div>`;
+                            }).join('')}
+                        </div>
+                    `}
+                </div>
+                
+                <!-- FOOTER -->
+                <div style="text-align:center;padding:20px;">
+                    <p style="font-size:10px;color:#999;">${username}.oneshoplify.com · Powered by ONESHOPLIFY</p>
+                </div>
+            </div>`;
+        
+    } catch (e) {
+        console.error('Shop error:', e);
+        container.innerHTML = '<p style="text-align:center;padding:60px;">Error loading shop</p>';
+    }
+}
+
+function searchShopProducts() {
+    const query = document.getElementById('shop-search')?.value?.toLowerCase() || '';
+    const cards = document.querySelectorAll('.shop-product-card');
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        card.style.display = name.includes(query) ? '' : 'none';
+    });
+}
+
+// =====================
+// VIEW SHOP PRODUCT DETAIL
+// =====================
+async function viewShopProduct(productId, storeId) {
+    showLoader();
+    try {
+        const doc = await db.collection('products').doc(productId).get();
+        if (!doc.exists) { hideLoader(); showToast('Product not found','error'); return; }
+        
+        const product = doc.data();
+        const isTicket = product.isTicket || product.category === 'Tickets & Events';
+        
+        // Get reviews
+        const reviewsSnap = await db.collection('reviews').where('productId','==',productId).get();
+        const reviews = [];
+        reviewsSnap.forEach(d => reviews.push(d.data()));
+        reviews.sort((a,b) => (b.createdAt?.toDate?.()||0) - (a.createdAt?.toDate?.()||0));
+        
+        hideLoader();
+        
+        showModal(`
+            <div style="max-height:85vh;overflow-y:auto;padding:0;">
+                <div style="position:relative;">
+                    <img src="${product.images?.[0] || '/app-icon.png'}" style="width:100%;height:320px;object-fit:cover;">
+                    <button onclick="hideModal()" style="position:absolute;top:10px;left:10px;width:32px;height:32px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;font-size:18px;cursor:pointer;">✕</button>
+                </div>
+                
+                <div style="padding:20px;">
+                    <h2 style="font-size:20px;margin-bottom:5px;">${product.name}</h2>
+                    <div style="font-size:28px;font-weight:800;color:#e44;margin-bottom:10px;">${formatCurrency(product.price)}</div>
+                    
+                    ${product.discountCode ? `
+                        <div style="background:#FFF8E1;padding:10px;border-radius:8px;margin:10px 0;text-align:center;">
+                            🎫 Use code: <strong>${product.discountCode.code}</strong> (-${product.discountCode.value}${product.discountCode.type==='percentage'?'%':'$'})
+                        </div>
+                    ` : ''}
+                    
+                    <div style="margin:10px 0;font-size:13px;color:#666;">
+                        <span>📦 ${product.totalSales||0} sold</span>
+                        <span style="margin-left:15px;">⭐ ${product.avgRating?.toFixed(1)||'0.0'} (${product.reviewCount||0})</span>
+                        ${product.stock > 0 ? `<span style="margin-left:15px;">📋 ${product.stock} in stock</span>` : ''}
+                    </div>
+                    
+                    ${isTicket && product.ticketData ? `
+                        <div style="background:#f0f0ff;padding:12px;border-radius:8px;margin:10px 0;">
+                            <p><strong>🎫 Event Details:</strong></p>
+                            <p style="font-size:12px;">📅 ${product.ticketData.eventDate} at ${product.ticketData.eventTime}</p>
+                            <p style="font-size:12px;">📍 ${product.ticketData.address}, ${product.ticketData.country}</p>
+                            <p style="font-size:12px;">🎟️ ${product.ticketData.remainingQuantity} tickets left</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${product.colors?.length ? `<p><strong>Colors:</strong> ${product.colors.join(', ')}</p>` : ''}
+                    ${product.sizes?.length ? `<p><strong>Sizes:</strong> ${product.sizes.join(', ')}</p>` : ''}
+                    
+                    <p style="color:#666;line-height:1.6;margin:10px 0;">${product.description || 'No description'}</p>
+                    
+                    <button class="btn-gold btn-full" style="padding:16px;font-size:16px;margin-top:15px;" 
+                            onclick="addShopProductToCart('${product.id}','${product.name.replace(/'/g,"\\'")}','${product.price}','${product.images?.[0]||'/app-icon.png'}','${storeId}');hideModal();">
+                        🛒 Add to Cart - ${formatCurrency(product.price)}
+                    </button>
+                    
+                    ${reviews.length > 0 ? `
+                        <div style="margin-top:20px;">
+                            <h4>📝 Reviews (${reviews.length})</h4>
+                            ${reviews.slice(0,5).map(r => `
+                                <div style="padding:10px;background:#fafafa;border-radius:8px;margin-bottom:6px;">
+                                    <div style="display:flex;justify-content:space-between;">
+                                        <strong>${r.userName||'Customer'}</strong>
+                                        <span style="color:#FFD700;">${'★'.repeat(r.rating||5)}</span>
+                                    </div>
+                                    <p style="font-size:12px;color:#666;">${r.comment||''}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `);
+    } catch(e) { hideLoader(); showToast('Error','error'); }
+}
+
+function addShopProductToCart(productId, name, price, image, storeId) {
+    let cart = JSON.parse(sessionStorage.getItem('shoplify_cart') || '[]');
+    const existing = cart.findIndex(i => i.productId === productId);
+    if (existing >= 0) {
+        cart[existing].quantity += 1;
+    } else {
+        cart.push({
+            productId, name, price: parseFloat(price), image,
+            merchantId: storeId, quantity: 1, isStoreProduct: true
+        });
+    }
+    sessionStorage.setItem('shoplify_cart', JSON.stringify(cart));
+    if (typeof updateCartBadge === 'function') updateCartBadge();
+    showToast('Added to cart! 🛒', 'success');
+}
+
+// =====================
+// SHOP PROFILE (Customer Dashboard in Shop)
+// =====================
+function openShopProfile(username) {
+    if (!APP.userProfile) {
+        showToast('Please sign in', 'info');
+        signInWithGoogle();
+        return;
+    }
+    
+    showModal(`
+        <div style="max-height:85vh;overflow-y:auto;padding:0;">
+            <div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:20px;text-align:center;color:white;">
+                <img src="${APP.userProfile.photoURL||'/app-icon.png'}" style="width:50px;height:50px;border-radius:50%;border:2px solid white;margin-bottom:8px;">
+                <h3>${APP.userProfile.displayName||APP.userProfile.username}</h3>
+                <p style="opacity:0.8;">Shopping at ${username}'s store</p>
+            </div>
+            <div style="padding:15px;">
+                <div style="background:#f5f5f5;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;">
+                    <p style="font-size:12px;">Wallet Balance</p>
+                    <p style="font-size:28px;font-weight:800;">${formatCurrency(APP.userProfile.walletBalance||0)}</p>
+                    <button class="btn-gold btn-small" onclick="hideModal();navigateTo('wallet');">💰 Deposit</button>
+                </div>
+                <button class="menu-item" onclick="hideModal();navigateTo('orders');">📦 My Orders</button>
+                <button class="menu-item" onclick="hideModal();navigateTo('settings');">⚙️ Settings</button>
+                <button class="menu-item" onclick="hideModal();navigateTo('customerservice');">🎧 Support</button>
+            </div>
+        </div>
+    `);
+}
+
+// =====================
+// STORE OWNER DASHBOARD
+// =====================
+async function loadStoreOwnerDashboard() {
+    console.log('📊 Loading store owner dashboard...');
+    
+    const container = document.getElementById('storeowner-content');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="text-align:center;padding:60px;"><div class="loader-spinner"></div><p>Loading...</p></div>';
+    
+    if (!APP.userProfile || !APP.userProfile.hasStore) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:60px;">
+                <p style="font-size:50px;">🏪</p>
+                <h3>No Store Found</h3>
+                <p style="color:#666;">Create your store first</p>
+                <button class="btn-gold" onclick="showStorePlans()">Create Store</button>
+            </div>`;
+        return;
+    }
+    
     const storeName = APP.userProfile.storeName || 'My Store';
     const storeUrl = `https://${APP.userProfile.username}.oneshoplify.com`;
     const storeColor = APP.userProfile.storeColor || '#667eea';
-    const isVerified = APP.userProfile.isAppVerified || false;
-    const totalProducts = APP.userProfile.totalProducts || 0;
-    const totalSales = APP.userProfile.totalSales || 0;
     const isLight = isColorLight(storeColor);
     const textColor = isLight ? '#1a1a1a' : '#ffffff';
+    
+    // Get stats
+    let totalProducts = 0, totalSales = 0, totalRevenue = 0;
+    try {
+        const prodSnap = await db.collection('products').where('merchantId','==',APP.userProfile.uid).get();
+        totalProducts = prodSnap.size;
+        
+        const orderSnap = await db.collection('orders').where('merchantId','==',APP.userProfile.uid).get();
+        orderSnap.forEach(doc => {
+            const o = doc.data();
+            if (o.status === 'completed') {
+                totalSales++;
+                totalRevenue += o.total || 0;
+            }
+        });
+    } catch(e) {}
     
     container.innerHTML = `
         <div style="padding:15px;padding-bottom:30px;">
             
             <!-- Store Header -->
-            <div style="text-align:center;padding:25px 20px;background:linear-gradient(135deg,${storeColor},#764ba2);border-radius:16px;color:${textColor};margin-bottom:15px;box-shadow:0 4px 16px rgba(0,0,0,0.15);">
-                ${APP.userProfile.storeLogo ? `<img src="${APP.userProfile.storeLogo}" style="width:60px;height:60px;border-radius:50%;border:3px solid ${textColor};margin-bottom:10px;">` : ''}
-                <h2 style="margin:0;font-size:22px;">${storeName}</h2>
-                ${isVerified ? '<span style="background:#20D5EC;color:white;padding:4px 14px;border-radius:15px;font-size:12px;margin-top:8px;display:inline-block;">✓ Verified</span>' : ''}
-                <p style="opacity:0.85;margin:6px 0 0;font-size:14px;">${APP.userProfile.storeCategory || 'Store'}</p>
+            <div style="text-align:center;padding:25px;background:linear-gradient(135deg,${storeColor},#764ba2);border-radius:16px;color:${textColor};margin-bottom:15px;box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+                ${APP.userProfile.storeLogo ? `<img src="${APP.userProfile.storeLogo}" style="width:60px;height:60px;border-radius:16px;border:3px solid white;margin-bottom:10px;">` : ''}
+                <h2>${storeName}</h2>
+                <p style="opacity:0.8;">${APP.userProfile.storeCategory || 'Store'}</p>
             </div>
             
-            <!-- Quick Stats -->
+            <!-- Stats -->
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:15px;">
-                <div class="stat-card" style="padding:14px;text-align:center;background:white;border-radius:10px;">
-                    <div class="stat-value" style="font-size:22px;font-weight:800;color:#667eea;">${totalProducts}</div>
-                    <div class="stat-label" style="font-size:10px;color:#999;">Products</div>
-                </div>
-                <div class="stat-card" style="padding:14px;text-align:center;background:white;border-radius:10px;">
-                    <div class="stat-value" style="font-size:22px;font-weight:800;color:#4CAF50;">${totalSales}</div>
-                    <div class="stat-label" style="font-size:10px;color:#999;">Sales</div>
-                </div>
-                <div class="stat-card" style="padding:14px;text-align:center;background:white;border-radius:10px;">
-                    <div class="stat-value" style="font-size:22px;font-weight:800;color:#FF9800;" id="store-revenue">$0</div>
-                    <div class="stat-label" style="font-size:10px;color:#999;">Revenue</div>
-                </div>
+                <div class="stat-card"><div class="stat-value">${totalProducts}</div><div class="stat-label">Products</div></div>
+                <div class="stat-card"><div class="stat-value">${totalSales}</div><div class="stat-label">Sales</div></div>
+                <div class="stat-card"><div class="stat-value">${formatCurrency(totalRevenue)}</div><div class="stat-label">Revenue</div></div>
             </div>
             
-            <!-- Main Actions -->
-            <button class="btn-gold btn-full" style="margin-bottom:8px;padding:13px;font-weight:700;" onclick="navigateTo('add-product')">➕ Add Product</button>
-            <button class="btn-outline btn-full" style="margin-bottom:8px;padding:12px;" onclick="addTicketProduct()">🎫 Add Ticket/Event</button>
-            <button class="btn-outline btn-full" style="margin-bottom:8px;padding:12px;" onclick="viewMyStore()">👁️ View My Store</button>
-            <button class="btn-outline btn-full" style="margin-bottom:8px;padding:12px;" onclick="navigateTo('orders')">📦 Orders</button>
-            <button class="btn-outline btn-full" style="margin-bottom:8px;padding:12px;" onclick="storeSettings()">⚙️ Store Settings</button>
-            <button class="btn-outline btn-full" style="margin-bottom:8px;padding:12px;" onclick="navigateTo('analytics')">📊 Analytics</button>
+            <!-- Quick Actions -->
+            <button class="btn-gold btn-full" style="margin-bottom:8px;" onclick="navigateTo('add-product')">➕ Add Product</button>
+            <button class="btn-outline btn-full" style="margin-bottom:8px;" onclick="addTicketProduct()">🎫 Add Ticket/Event</button>
+            <button class="btn-outline btn-full" style="margin-bottom:8px;" onclick="openStoreShop('${APP.userProfile.username}')">👁️ View My Shop</button>
+            <button class="btn-outline btn-full" style="margin-bottom:8px;" onclick="navigateTo('orders')">📦 Orders</button>
+            <button class="btn-outline btn-full" style="margin-bottom:8px;" onclick="storeOwnerSettings()">⚙️ Store Settings</button>
+            <button class="btn-outline btn-full" style="margin-bottom:8px;" onclick="loadStoreAnalytics()">📊 Analytics</button>
             
             <!-- Store URL -->
-            <div style="background:white;padding:15px;border-radius:12px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                <p style="font-weight:600;font-size:13px;">🔗 Your Store URL:</p>
-                <div style="font-family:monospace;font-size:12px;background:#f5f5f5;padding:10px;border-radius:6px;margin:8px 0;">${storeUrl}</div>
-                <button class="copy-btn" onclick="copyToClipboard('${storeUrl}');showToast('Link copied!','success');">📋 Copy</button>
+            <div style="background:white;padding:15px;border-radius:12px;margin:10px 0;">
+                <p style="font-weight:600;">🔗 Your Store URL:</p>
+                <div style="font-family:monospace;font-size:12px;background:#f5f5f5;padding:10px;border-radius:6px;">${storeUrl}</div>
+                <p style="font-size:11px;color:#999;">Also: ${APP.baseUrl}/store/${APP.userProfile.username}</p>
+                <button class="copy-btn" onclick="copyToClipboard('${storeUrl}')">📋 Copy</button>
             </div>
             
             <!-- Sponsorship -->
-            <div style="background:#FFF8E1;padding:14px;border-radius:10px;text-align:center;border:1px solid #FFE082;margin-bottom:10px;">
-                <p style="font-weight:600;">⭐ Sponsor Your Products</p>
-                <p style="font-size:12px;color:#666;">$10/month per product - Get featured on the homepage!</p>
-                <button class="btn-small btn-outline" onclick="sponsorStoreProduct()">Promote Product</button>
+            <div style="background:#FFF8E1;padding:14px;border-radius:10px;text-align:center;margin-bottom:10px;">
+                <p style="font-weight:600;">⭐ Sponsor Products</p>
+                <p style="font-size:12px;">$10/month per product - Featured on homepage</p>
+                <button class="btn-small btn-outline" onclick="sponsorStoreProduct()">Promote</button>
             </div>
             
-            <!-- Store Plan -->
-            <div style="background:#E8F5E9;padding:14px;border-radius:10px;text-align:center;">
-                <p style="font-size:13px;">✅ Store Active - ${APP.userProfile.storePlan || 'Monthly'} Plan</p>
-                ${APP.userProfile.storeExpiry ? `<p style="font-size:11px;color:#666;">Expires: ${new Date(APP.userProfile.storeExpiry.seconds*1000).toLocaleDateString()}</p>` : ''}
-                <button class="btn-small btn-outline" onclick="renewStorePlan()">Renew / Upgrade</button>
+            <!-- Store Status -->
+            <div style="background:#E8F5E9;padding:12px;border-radius:10px;text-align:center;">
+                <p>✅ Store Active · ${APP.userProfile.storePlan || 'Active'} Plan</p>
+                ${APP.userProfile.storeExpiry ? `<p style="font-size:11px;">Expires: ${new Date(APP.userProfile.storeExpiry.seconds*1000).toLocaleDateString()}</p>` : ''}
+                <button class="btn-small btn-outline" onclick="showStorePlans()">Renew</button>
             </div>
         </div>`;
 }
 
 // =====================
-// STORE SETUP FLOW
+// STORE ANALYTICS WITH DOUGHNUT CHART
 // =====================
-function startStoreSetup() {
-    showModal(`
-        <div style="padding:15px;max-height:75vh;overflow-y:auto;">
-            <h3>🏪 Create Your Store</h3>
-            <p style="color:#666;margin:10px 0;">Set up your own store on ONESHOPLIFY</p>
-            
-            <!-- Store Type -->
-            <div class="input-group" style="margin-top:15px;">
-                <label>Store Type</label>
-                <div style="display:flex;gap:10px;margin-top:5px;">
-                    ${STORE_TYPES.map(t => `
-                        <div onclick="selectStoreType('${t.id}')" id="store-type-${t.id}"
-                             style="flex:1;padding:15px;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;text-align:center;transition:0.2s;">
-                            <div style="font-size:30px;">${t.icon}</div>
-                            <div style="font-weight:600;font-size:13px;">${t.name}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- Store Name -->
-            <div class="input-group" style="margin-top:15px;">
-                <label>Store Name</label>
-                <input type="text" id="setup-store-name" class="input-field" placeholder="My Store Name">
-            </div>
-            
-            <!-- Description -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Store Description (10-100 words)</label>
-                <textarea id="setup-store-desc" class="input-field" rows="3" placeholder="Describe your store..."></textarea>
-                <small style="color:#999;" id="word-count">0 words</small>
-            </div>
-            
-            <!-- Category -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Store Category</label>
-                <select id="setup-store-category" class="input-field">
-                    <option value="">Select Category</option>
-                    ${STORE_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
-                </select>
-            </div>
-            
-            <!-- Country -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Store Country</label>
-                <select id="setup-store-country" class="input-field">
-                    <option value="">Select Country</option>
-                    ${typeof COUNTRIES !== 'undefined' ? Object.entries(COUNTRIES).sort((a,b) => a[1].name.localeCompare(b[1].name)).map(([code, data]) => `<option value="${code}">${data.flag||''} ${data.name}</option>`).join('') : ''}
-                </select>
-            </div>
-            
-            <!-- Shipping Countries -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Ship To Countries (Select all that apply)</label>
-                <div id="shipping-countries-setup" style="max-height:150px;overflow-y:auto;border:2px solid #e0e0e0;border-radius:8px;padding:10px;">
-                    ${typeof COUNTRIES !== 'undefined' ? Object.entries(COUNTRIES).sort((a,b) => a[1].name.localeCompare(b[1].name)).slice(0,20).map(([code, data]) => `
-                        <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:13px;">
-                            <input type="checkbox" class="shipping-country-check" value="${code}" style="width:16px;height:16px;">
-                            ${data.flag||''} ${data.name}
-                        </label>
-                    `).join('') : ''}
-                </div>
-            </div>
-            
-            <!-- Payment Gateway -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Payment Gateway (ONESHOPLIFY Wallet)</label>
-                <div style="background:#f5f5f5;padding:12px;border-radius:8px;">
-                    <p style="font-size:13px;">✅ ONESHOPLIFY Wallet - Connected automatically</p>
-                    <p style="font-size:11px;color:#666;">Customers pay with their wallet balance</p>
-                </div>
-            </div>
-            
-            <!-- Industrial UID -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Industrial UID (from ONESHOPLIFY Wallet)</label>
-                <input type="text" id="setup-industrial-uid" class="input-field" placeholder="Enter your industrial UID">
-                <small style="color:#999;">Get this from ONESHOPLIFY Wallet → Profile → Store & Gateway → Generate Industrial UID</small>
-            </div>
-            
-            <!-- Store Logo -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Store Logo (Upload)</label>
-                <input type="file" id="setup-store-logo" class="input-field" accept="image/*">
-            </div>
-            
-            <!-- Store Banner -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Store Banner (Upload)</label>
-                <input type="file" id="setup-store-banner" class="input-field" accept="image/*">
-            </div>
-            
-            <!-- Product Range -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Expected Product Range</label>
-                <select id="setup-product-range" class="input-field">
-                    <option value="">Select Range</option>
-                    ${PRODUCT_RANGES.map(r => `<option value="${r.value}">${r.label}</option>`).join('')}
-                </select>
-            </div>
-            
-            <!-- Order Fulfillment Confirmation -->
-            <label style="display:flex;align-items:start;gap:8px;margin-top:15px;cursor:pointer;">
-                <input type="checkbox" id="setup-fulfill" style="width:18px;height:18px;margin-top:3px;">
-                <span style="font-size:13px;">I confirm that I will fulfill all orders placed through my store</span>
-            </label>
-            
-            <!-- Terms -->
-            <label style="display:flex;align-items:start;gap:8px;margin-top:8px;cursor:pointer;">
-                <input type="checkbox" id="setup-terms" style="width:18px;height:18px;margin-top:3px;">
-                <span style="font-size:13px;">I agree to ONESHOPLIFY Store Terms & Conditions</span>
-            </label>
-            
-            <!-- Plan Selection -->
-            <div class="input-group" style="margin-top:15px;">
-                <label>Select Plan</label>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:5px;">
-                    ${Object.entries(STORE_PLANS).map(([key, plan]) => `
-                        <div onclick="selectStorePlan('${key}')" id="store-plan-${key}"
-                             style="padding:12px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;text-align:center;transition:0.2s;">
-                            <div style="font-weight:700;font-size:14px;">${plan.name}</div>
-                            <div style="font-size:20px;font-weight:800;color:#B8860B;">$${plan.price}</div>
-                            ${plan.savings > 0 ? `<div style="font-size:10px;color:#4CAF50;">Save $${plan.savings}</div>` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <button class="btn-gold btn-full" style="margin-top:15px;" onclick="completeStoreSetup()">🚀 Create Store & Pay</button>
-        </div>
-    `);
-    
-    // Word count for description
-    document.getElementById('setup-store-desc').addEventListener('input', function() {
-        const words = this.value.trim().split(/\s+/).filter(w => w.length > 0);
-        document.getElementById('word-count').textContent = words.length + ' words';
-    });
-    
-    window._storeSetup = { type: 'individual', plan: 'monthly', shippingCountries: [] };
-}
-
-function selectStoreType(type) {
-    window._storeSetup.type = type;
-    document.querySelectorAll('[id^="store-type-"]').forEach(el => el.style.border = '2px solid #e0e0e0');
-    const el = document.getElementById('store-type-' + type);
-    if (el) { el.style.border = '2px solid #FFD700'; el.style.background = '#FFFDE7'; }
-}
-
-function selectStorePlan(plan) {
-    window._storeSetup.plan = plan;
-    document.querySelectorAll('[id^="store-plan-"]').forEach(el => { el.style.border = '2px solid #e0e0e0'; el.style.background = 'white'; });
-    const el = document.getElementById('store-plan-' + plan);
-    if (el) { el.style.border = '2px solid #FFD700'; el.style.background = '#FFFDE7'; }
-}
-
-async function completeStoreSetup() {
-    const name = document.getElementById('setup-store-name')?.value?.trim();
-    const desc = document.getElementById('setup-store-desc')?.value?.trim();
-    const category = document.getElementById('setup-store-category')?.value;
-    const country = document.getElementById('setup-store-country')?.value;
-    const industrialUid = document.getElementById('setup-industrial-uid')?.value?.trim();
-    const productRange = document.getElementById('setup-product-range')?.value;
-    const fulfill = document.getElementById('setup-fulfill')?.checked;
-    const terms = document.getElementById('setup-terms')?.checked;
-    const storeType = window._storeSetup?.type || 'individual';
-    const plan = window._storeSetup?.plan || 'monthly';
-    const planPrice = STORE_PLANS[plan]?.price || 5;
-    
-    if (!name) { showToast('Enter store name', 'error'); return; }
-    if (!desc || desc.split(/\s+/).length < 10) { showToast('Description must be at least 10 words', 'error'); return; }
-    if (!category) { showToast('Select category', 'error'); return; }
-    if (!country) { showToast('Select country', 'error'); return; }
-    if (!fulfill) { showToast('Confirm order fulfillment', 'error'); return; }
-    if (!terms) { showToast('Agree to terms', 'error'); return; }
-    if ((APP.userProfile.walletBalance || 0) < planPrice) { showToast(`Need $${planPrice} for ${STORE_PLANS[plan].name} plan`, 'error'); navigateTo('wallet'); return; }
-    
-    // Get selected shipping countries
-    const shippingCountries = [];
-    document.querySelectorAll('.shipping-country-check:checked').forEach(cb => shippingCountries.push(cb.value));
-    
-    hideModal();
-    showLoader();
-    
-    try {
-        // Upload logo and banner
-        let logoUrl = '', bannerUrl = '';
-        const logoFile = document.getElementById('setup-store-logo')?.files?.[0];
-        const bannerFile = document.getElementById('setup-store-banner')?.files?.[0];
-        if (logoFile) { try { logoUrl = await uploadToCloudinary(logoFile); } catch(e) {} }
-        if (bannerFile) { try { bannerUrl = await uploadToCloudinary(bannerFile); } catch(e) {} }
-        
-        const expiryDate = new Date();
-        if (plan === 'monthly') expiryDate.setMonth(expiryDate.getMonth() + 1);
-        else if (plan === 'quarterly') expiryDate.setMonth(expiryDate.getMonth() + 3);
-        else if (plan === 'biannual') expiryDate.setMonth(expiryDate.getMonth() + 6);
-        else if (plan === 'annual') expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-        
-        const updates = {
-            walletBalance: firebase.firestore.FieldValue.increment(-planPrice),
-            hasStore: true,
-            isMerchant: true,
-            storeName: name,
-            storeDescription: desc,
-            storeCategory: category,
-            storeCountry: country,
-            storeType: storeType,
-            storePlan: plan,
-            storeExpiry: firebase.firestore.Timestamp.fromDate(expiryDate),
-            industrialUid: industrialUid,
-            productRange: productRange,
-            shippingCountries: shippingCountries,
-            storeLogo: logoUrl || APP.userProfile.storeLogo || '',
-            storeBanner: bannerUrl || APP.userProfile.storeBanner || '',
-            storeActive: true,
-            storeTemplate: 'modern',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await db.collection('users').doc(APP.userProfile.uid).update(updates);
-        Object.assign(APP.userProfile, updates);
-        APP.userProfile.walletBalance -= planPrice;
-        
-        await db.collection('transactions').add({
-            userId: APP.userProfile.uid,
-            type: 'store_subscription',
-            amount: planPrice,
-            currency: 'USD',
-            status: 'completed',
-            description: `Store ${STORE_PLANS[plan].name} plan`,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        hideLoader();
-        showToast(`Store created! 🎉 Your link: ${APP.userProfile.username}.oneshoplify.com`, 'success');
-        
-        if (typeof loadStoreOwnerDashboard === 'function') {
-            loadStoreOwnerDashboard();
-        }
-        
-    } catch(e) {
-        hideLoader();
-        console.error('Store setup error:', e);
-        showToast('Failed to create store', 'error');
-    }
-}
-
-// =====================
-// TICKET/EVENT PRODUCT
-// =====================
-function addTicketProduct() {
+async function loadStoreAnalytics() {
     showModal(`
         <div style="padding:15px;max-height:80vh;overflow-y:auto;">
-            <h3>🎫 Add Ticket / Event Product</h3>
-            <p style="color:#666;font-size:13px;">Create a ticket for your event</p>
+            <h3>📊 Store Analytics</h3>
             
-            <!-- Event Name -->
-            <div class="input-group" style="margin-top:15px;">
-                <label>Event Name *</label>
-                <input type="text" id="ticket-event-name" class="input-field" placeholder="e.g. Summer Music Festival">
+            <div class="affiliate-stats">
+                <div class="stat-card"><div class="stat-value" id="sa-total-sales">-</div><div class="stat-label">Total Sales</div></div>
+                <div class="stat-card"><div class="stat-value" id="sa-revenue">-</div><div class="stat-label">Revenue</div></div>
+                <div class="stat-card"><div class="stat-value" id="sa-visitors">-</div><div class="stat-label">Visitors</div></div>
+                <div class="stat-card"><div class="stat-value" id="sa-conversion">-</div><div class="stat-label">Conversion</div></div>
             </div>
             
-            <!-- Event Description -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Event Description</label>
-                <textarea id="ticket-event-desc" class="input-field" rows="3" placeholder="Describe your event..."></textarea>
+            <div style="background:white;border-radius:12px;padding:15px;margin:15px 0;">
+                <h4>📈 Sales Overview</h4>
+                <div style="height:200px;"><canvas id="salesChart"></canvas></div>
             </div>
             
-            <!-- Date & Time -->
-            <div style="display:flex;gap:10px;margin-top:10px;">
-                <div class="input-group" style="flex:1;">
-                    <label>Event Date *</label>
-                    <input type="date" id="ticket-event-date" class="input-field">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div style="background:white;border-radius:12px;padding:15px;">
+                    <h4 style="font-size:13px;">🍩 Products</h4>
+                    <div style="height:180px;"><canvas id="productDoughnut"></canvas></div>
                 </div>
-                <div class="input-group" style="flex:1;">
-                    <label>Event Time *</label>
-                    <input type="time" id="ticket-event-time" class="input-field">
+                <div style="background:white;border-radius:12px;padding:15px;">
+                    <h4 style="font-size:13px;">🌍 Countries</h4>
+                    <div style="height:180px;"><canvas id="countryDoughnut"></canvas></div>
                 </div>
             </div>
             
-            <!-- Country & Address -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Country *</label>
-                <select id="ticket-country" class="input-field">
-                    <option value="">Select Country</option>
-                    ${typeof COUNTRIES !== 'undefined' ? Object.entries(COUNTRIES).sort((a,b) => a[1].name.localeCompare(b[1].name)).map(([code, data]) => `<option value="${code}">${data.flag||''} ${data.name}</option>`).join('') : ''}
-                </select>
-            </div>
-            
-            <div class="input-group" style="margin-top:10px;">
-                <label>Full Venue Address *</label>
-                <input type="text" id="ticket-address" class="input-field" placeholder="Venue address">
-            </div>
-            
-            <!-- Ticket Quantity -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Total Ticket Quantity *</label>
-                <input type="number" id="ticket-quantity" class="input-field" placeholder="e.g. 500" min="1">
-            </div>
-            
-            <!-- Visibility -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Visibility</label>
-                <div style="display:flex;gap:10px;margin-top:5px;">
-                    ${TICKET_VISIBILITY.map(v => `
-                        <div onclick="selectTicketVisibility('${v.id}')" id="ticket-vis-${v.id}"
-                             style="flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;text-align:center;">
-                            <div style="font-weight:600;">${v.name}</div>
-                            <div style="font-size:11px;color:#666;">${v.desc}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- Preservation Types -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Preservation Types</label>
-                <div id="ticket-preservations" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;">
-                    ${TICKET_PRESERVATIONS.map(p => `
-                        <div onclick="toggleTicketPreservation('${p.id}')" id="ticket-pres-${p.id}"
-                             style="padding:8px 14px;border:2px solid #e0e0e0;border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;">
-                            ${p.name}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- Price by Preservation -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>
-                    <input type="checkbox" id="ticket-vary-price" onchange="toggleTicketPriceVariation()">
-                    Vary price by preservation type
-                </label>
-            </div>
-            <div id="ticket-price-variations" style="display:none;"></div>
-            
-            <!-- Default Price (if not varied) -->
-            <div class="input-group" style="margin-top:10px;" id="ticket-default-price-group">
-                <label>Ticket Price (USD) *</label>
-                <input type="number" id="ticket-price" class="input-field" placeholder="0.00" step="0.01" min="0.01">
-            </div>
-            
-            <!-- Ticket Image -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Ticket Image (Upload)</label>
-                <input type="file" id="ticket-image" class="input-field" accept="image/*">
-            </div>
-            
-            <!-- Expiration Date -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Ticket Expiration Date</label>
-                <input type="date" id="ticket-expiry" class="input-field">
-            </div>
-            
-            <!-- Delivery Method -->
-            <div class="input-group" style="margin-top:10px;">
-                <label>Ticket Delivery Method</label>
-                <div style="display:flex;gap:10px;margin-top:5px;">
-                    ${TICKET_DELIVERY.map(d => `
-                        <div onclick="selectTicketDelivery('${d.id}')" id="ticket-del-${d.id}"
-                             style="flex:1;padding:12px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;text-align:center;">
-                            <div style="font-weight:600;">${d.name}</div>
-                            <div style="font-size:11px;color:#666;">${d.desc}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            <!-- WhatsApp Number (if owner delivery) -->
-            <div class="input-group" style="margin-top:10px;display:none;" id="ticket-whatsapp-group">
-                <label>Your WhatsApp Number</label>
-                <input type="tel" id="ticket-whatsapp" class="input-field" placeholder="+1234567890">
-            </div>
-            
-            <button class="btn-gold btn-full" style="margin-top:15px;" onclick="createTicketProduct()">🎫 Create Ticket</button>
+            <button class="btn-gold btn-full" style="margin-top:15px;" onclick="hideModal()">Close</button>
         </div>
     `);
     
-    window._ticketSetup = {
-        visibility: 'public',
-        delivery: 'app',
-        preservations: [],
-        varyPrice: false
-    };
+    setTimeout(() => loadAnalyticsCharts(), 500);
 }
 
-function selectTicketVisibility(id) {
-    window._ticketSetup.visibility = id;
-    document.querySelectorAll('[id^="ticket-vis-"]').forEach(el => el.style.border = '2px solid #e0e0e0');
-    const el = document.getElementById('ticket-vis-' + id);
-    if (el) el.style.border = '2px solid #FFD700';
-}
-
-function toggleTicketPreservation(id) {
-    const idx = window._ticketSetup.preservations.indexOf(id);
-    if (idx >= 0) {
-        window._ticketSetup.preservations.splice(idx, 1);
+async function loadAnalyticsCharts() {
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        script.onload = () => renderCharts();
+        document.head.appendChild(script);
     } else {
-        window._ticketSetup.preservations.push(id);
-    }
-    const el = document.getElementById('ticket-pres-' + id);
-    if (el) {
-        const selected = window._ticketSetup.preservations.includes(id);
-        el.style.border = selected ? '2px solid #FFD700' : '2px solid #e0e0e0';
-        el.style.background = selected ? '#FFFDE7' : 'white';
+        renderCharts();
     }
 }
 
-function toggleTicketPriceVariation() {
-    const vary = document.getElementById('ticket-vary-price')?.checked;
-    window._ticketSetup.varyPrice = vary;
-    
-    document.getElementById('ticket-default-price-group').style.display = vary ? 'none' : '';
-    const variationsDiv = document.getElementById('ticket-price-variations');
-    
-    if (vary) {
-        variationsDiv.style.display = 'block';
-        variationsDiv.innerHTML = window._ticketSetup.preservations.map(p => {
-            const pres = TICKET_PRESERVATIONS.find(tp => tp.id === p);
-            return `
-                <div class="input-group" style="margin-top:8px;">
-                    <label>${pres?.name || p} Price (USD)</label>
-                    <input type="number" id="ticket-price-${p}" class="input-field" placeholder="0.00" step="0.01" min="0.01">
-                </div>`;
-        }).join('');
-    } else {
-        variationsDiv.style.display = 'none';
-    }
-}
-
-function selectTicketDelivery(id) {
-    window._ticketSetup.delivery = id;
-    document.querySelectorAll('[id^="ticket-del-"]').forEach(el => el.style.border = '2px solid #e0e0e0');
-    const el = document.getElementById('ticket-del-' + id);
-    if (el) el.style.border = '2px solid #FFD700';
-    document.getElementById('ticket-whatsapp-group').style.display = id === 'owner' ? '' : 'none';
-}
-
-async function createTicketProduct() {
-    const name = document.getElementById('ticket-event-name')?.value?.trim();
-    const desc = document.getElementById('ticket-event-desc')?.value?.trim();
-    const date = document.getElementById('ticket-event-date')?.value;
-    const time = document.getElementById('ticket-event-time')?.value;
-    const country = document.getElementById('ticket-country')?.value;
-    const address = document.getElementById('ticket-address')?.value?.trim();
-    const quantity = parseInt(document.getElementById('ticket-quantity')?.value) || 0;
-    const visibility = window._ticketSetup?.visibility || 'public';
-    const delivery = window._ticketSetup?.delivery || 'app';
-    const preservations = window._ticketSetup?.preservations || [];
-    const varyPrice = window._ticketSetup?.varyPrice || false;
-    const expiryDate = document.getElementById('ticket-expiry')?.value;
-    const whatsapp = document.getElementById('ticket-whatsapp')?.value?.trim();
-    
-    if (!name) { showToast('Enter event name', 'error'); return; }
-    if (!date) { showToast('Select event date', 'error'); return; }
-    if (!time) { showToast('Select event time', 'error'); return; }
-    if (!country) { showToast('Select country', 'error'); return; }
-    if (!address) { showToast('Enter venue address', 'error'); return; }
-    if (quantity < 1) { showToast('Enter ticket quantity', 'error'); return; }
-    
-    hideModal();
-    showLoader();
-    
+async function renderCharts() {
     try {
-        const imageFile = document.getElementById('ticket-image')?.files?.[0];
-        let imageUrl = '';
-        if (imageFile) { try { imageUrl = await uploadToCloudinary(imageFile); } catch(e) {} }
+        const ordersSnap = await db.collection('orders').where('merchantId','==',APP.userProfile.uid).get();
         
-        // Generate ticket IDs
-        const ticketIds = [];
-        for (let i = 0; i < quantity; i++) {
-            ticketIds.push('TKT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 6).toUpperCase());
-        }
+        // Sales chart data
+        const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const salesData = [0,0,0,0,0,0,0];
+        const revenueData = [0,0,0,0,0,0,0];
+        const productSales = {};
+        const countrySales = {};
+        let totalSales = 0, totalRevenue = 0;
         
-        const productData = {
-            name: name,
-            description: desc,
-            price: varyPrice ? 0 : (parseFloat(document.getElementById('ticket-price')?.value) || 0),
-            category: 'Tickets & Events',
-            isTicket: true,
-            ticketData: {
-                eventDate: date,
-                eventTime: time,
-                country: country,
-                address: address,
-                venue: address,
-                totalQuantity: quantity,
-                remainingQuantity: quantity,
-                ticketIds: ticketIds,
-                usedTicketIds: [],
-                visibility: visibility,
-                deliveryMethod: delivery,
-                preservations: preservations,
-                varyPrice: varyPrice,
-                prices: {},
-                whatsappNumber: whatsapp || '',
-                expiryDate: expiryDate || date,
-                expired: false
-            },
-            images: imageUrl ? [imageUrl] : ['/app-icon.png'],
-            stock: quantity,
-            merchantId: APP.userProfile.uid,
-            merchantName: APP.userProfile.storeName || APP.userProfile.displayName,
-            status: visibility === 'link_only' ? 'hidden' : 'active',
-            sponsored: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+        ordersSnap.forEach(doc => {
+            const o = doc.data();
+            if (o.status === 'completed') {
+                totalSales++;
+                totalRevenue += o.total || 0;
+                const date = o.createdAt?.toDate?.() || new Date();
+                const dayIdx = (date.getDay() + 6) % 7;
+                salesData[dayIdx]++;
+                revenueData[dayIdx] += o.total || 0;
+                
+                const pName = o.items?.[0]?.name || 'Unknown';
+                productSales[pName] = (productSales[pName] || 0) + 1;
+                
+                const country = o.shipping?.country || 'Unknown';
+                countrySales[country] = (countrySales[country] || 0) + (o.total || 0);
+            }
+        });
         
-        // Set prices for each preservation if varying
-        if (varyPrice) {
-            preservations.forEach(p => {
-                const priceInput = document.getElementById('ticket-price-' + p);
-                if (priceInput) {
-                    productData.ticketData.prices[p] = parseFloat(priceInput.value) || 0;
-                }
+        document.getElementById('sa-total-sales').textContent = totalSales;
+        document.getElementById('sa-revenue').textContent = formatCurrency(totalRevenue);
+        
+        // Sales Line Chart
+        const ctx1 = document.getElementById('salesChart');
+        if (ctx1 && typeof Chart !== 'undefined') {
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [
+                        { label: 'Sales', data: salesData, borderColor: '#FFD700', tension: 0.3, borderWidth: 2 },
+                        { label: 'Revenue', data: revenueData, borderColor: '#00C851', tension: 0.3, borderWidth: 2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
         
-        const docRef = await db.collection('products').add(productData);
-        
-        // Generate ticket images for each ticket ID
-        await generateTicketImages(docRef.id, ticketIds, productData);
-        
-        hideLoader();
-        showToast(`Ticket created! ${quantity} tickets generated. ✅`, 'success');
-        
-        if (typeof loadStoreOwnerDashboard === 'function') {
-            loadStoreOwnerDashboard();
+        // Product Doughnut Chart
+        const ctx2 = document.getElementById('productDoughnut');
+        if (ctx2 && typeof Chart !== 'undefined') {
+            const pLabels = Object.keys(productSales).slice(0, 5);
+            const pData = pLabels.map(l => productSales[l]);
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: pLabels.length > 0 ? pLabels : ['No sales'],
+                    datasets: [{ data: pData.length > 0 ? pData : [1], backgroundColor: ['#FFD700','#00C851','#33B5E5','#FF8800','#7C3AED'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { fontSize: 10 } } } }
+            });
         }
         
-    } catch(e) {
-        hideLoader();
-        console.error('Ticket creation error:', e);
-        showToast('Failed to create ticket', 'error');
-    }
-}
-
-async function generateTicketImages(productId, ticketIds, productData) {
-    // This function would generate ticket images server-side
-    // For now, we store the ticket data for retrieval
-    const ticketImages = ticketIds.map(ticketId => ({
-        ticketId: ticketId,
-        productId: productId,
-        eventName: productData.name,
-        eventDate: productData.ticketData.eventDate,
-        eventTime: productData.ticketData.eventTime,
-        venue: productData.ticketData.address,
-        country: productData.ticketData.country,
-        expiryDate: productData.ticketData.expiryDate,
-        used: false,
-        usedBy: null,
-        usedAt: null,
-        imageUrl: productData.images?.[0] || ''
-    }));
-    
-    // Store in ticket collection
-    for (const ticket of ticketImages) {
-        await db.collection('tickets').add(ticket);
-    }
-    
-    console.log(`✅ ${ticketIds.length} tickets generated for product ${productId}`);
-}
-
-// =====================
-// SPONSOR STORE PRODUCT
-// =====================
-async function sponsonStoreProduct() {
-    const snap = await db.collection('products')
-        .where('merchantId', '==', APP.userProfile.uid)
-        .where('status', '==', 'active')
-        .get();
-    
-    const products = [];
-    snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
-    
-    if (products.length === 0) { showToast('Add products first', 'error'); return; }
-    
-    showModal(`
-        <div style="padding:10px;max-height:70vh;overflow-y:auto;">
-            <h3>⭐ Sponsor Product</h3>
-            <p style="color:#666;font-size:12px;">$10/month per product - Appears on homepage</p>
-            ${products.map(p => `
-                <div style="display:flex;gap:10px;padding:12px;background:white;border-radius:10px;margin:8px 0;box-shadow:0 2px 6px rgba(0,0,0,0.04);align-items:center;">
-                    <img src="${p.images?.[0] || '/app-icon.png'}" style="width:45px;height:45px;border-radius:8px;object-fit:cover;">
-                    <div style="flex:1;">
-                        <div style="font-weight:600;font-size:13px;">${p.name}</div>
-                        <div style="font-size:11px;color:#666;">${formatCurrency(p.price)}</div>
-                    </div>
-                    <button class="btn-small btn-gold" onclick="confirmSponsorship('${p.id}')">Sponsor - $10</button>
-                </div>
-            `).join('')}
-        </div>
-    `);
-}
-
-async function confirmSponsorship(productId) {
-    if ((APP.userProfile.walletBalance || 0) < 10) {
-        showToast('Need $10 to sponsor', 'error');
-        navigateTo('wallet');
-        return;
-    }
-    
-    hideModal();
-    showLoader();
-    
-    try {
-        await db.collection('users').doc(APP.userProfile.uid).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-10)
-        });
+        // Country Doughnut Chart
+        const ctx3 = document.getElementById('countryDoughnut');
+        if (ctx3 && typeof Chart !== 'undefined') {
+            const cLabels = Object.keys(countrySales).slice(0, 5);
+            const cData = cLabels.map(l => countrySales[l]);
+            new Chart(ctx3, {
+                type: 'doughnut',
+                data: {
+                    labels: cLabels.length > 0 ? cLabels : ['No sales'],
+                    datasets: [{ data: cData.length > 0 ? cData : [1], backgroundColor: ['#FFD700','#00C851','#33B5E5','#FF8800','#7C3AED'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { fontSize: 10 } } } }
+            });
+        }
         
-        await db.collection('products').doc(productId).update({
-            sponsored: true,
-            sponsoredUntil: firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
-        });
-        
-        APP.userProfile.walletBalance -= 10;
-        
-        await db.collection('transactions').add({
-            userId: APP.userProfile.uid,
-            type: 'sponsorship',
-            amount: 10,
-            currency: 'USD',
-            status: 'completed',
-            description: 'Product sponsorship - 30 days',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        hideLoader();
-        showToast('Product sponsored! ⭐', 'success');
-    } catch(e) { hideLoader(); showToast('Failed', 'error'); }
+    } catch(e) { console.error('Chart error:', e); }
 }
 
-// =====================
-// STORE SETTINGS
-// =====================
-function storeSettings() {
-    showModal(`
-        <div style="padding:10px;max-height:70vh;overflow-y:auto;">
-            <h3>⚙️ Store Settings</h3>
-            <div class="input-group"><label>Store Name</label><input type="text" id="settings-store-name" class="input-field" value="${APP.userProfile.storeName || ''}"></div>
-            <div class="input-group"><label>Description</label><textarea id="settings-store-desc" class="input-field" rows="2">${APP.userProfile.storeDescription || ''}</textarea></div>
-            <div class="input-group"><label>Theme Color</label><input type="color" id="settings-store-color" class="input-field" value="${APP.userProfile.storeColor || '#667eea'}" style="height:50px;"></div>
-            <div class="input-group"><label>Logo (Upload)</label><input type="file" id="settings-logo-upload" class="input-field" accept="image/*"></div>
-            <div class="input-group"><label>Banner (Upload)</label><input type="file" id="settings-banner-upload" class="input-field" accept="image/*"></div>
-            <button class="btn-gold btn-full" style="margin-top:15px;" onclick="saveStoreSettings()">💾 Save</button>
-        </div>
-    `);
-}
-
-async function saveStoreSettings() {
-    const name = document.getElementById('settings-store-name')?.value?.trim();
-    const desc = document.getElementById('settings-store-desc')?.value?.trim();
-    const color = document.getElementById('settings-store-color')?.value;
-    if (!name) { showToast('Enter store name', 'error'); return; }
-    hideModal(); showLoader();
-    try {
-        const updates = { storeName: name, storeDescription: desc, storeColor: color };
-        const logoFile = document.getElementById('settings-logo-upload')?.files?.[0];
-        const bannerFile = document.getElementById('settings-banner-upload')?.files?.[0];
-        if (logoFile) { try { updates.storeLogo = await uploadToCloudinary(logoFile); } catch(e) {} }
-        if (bannerFile) { try { updates.storeBanner = await uploadToCloudinary(bannerFile); } catch(e) {} }
-        await db.collection('users').doc(APP.userProfile.uid).update(updates);
-        Object.assign(APP.userProfile, updates);
-        hideLoader(); showToast('Saved! ✅', 'success');
-    } catch(e) { hideLoader(); showToast('Failed', 'error'); }
-}
-
-// =====================
-// HELPER
-// =====================
 function isColorLight(hex) {
     if (!hex) return false;
-    const c = hex.replace('#', '');
-    const r = parseInt(c.substring(0,2), 16), g = parseInt(c.substring(2,4), 16), b = parseInt(c.substring(4,6), 16);
-    return (r*299 + g*587 + b*114)/1000 > 150;
-}
-
-function renewStorePlan() {
-    showModal(`
-        <div style="padding:10px;"><h3>🔄 Renew Store Plan</h3>
-        ${Object.entries(STORE_PLANS).map(([key, plan]) => `
-            <div style="padding:15px;border-left:4px solid #667eea;margin:10px 0;background:white;border-radius:8px;">
-                <h4>${plan.name}</h4>
-                <div style="font-size:24px;font-weight:800;">$${plan.price}</div>
-                ${plan.savings > 0 ? `<p style="color:#4CAF50;">Save $${plan.savings}</p>` : ''}
-                <button class="btn-gold btn-full" onclick="payStoreRenewal('${key}',${plan.price})">Select</button>
-            </div>
-        `).join('')}</div>`);
-}
-
-async function payStoreRenewal(plan, price) {
-    if ((APP.userProfile.walletBalance||0) < price) { showToast('Insufficient balance','error'); navigateTo('wallet'); return; }
-    hideModal(); showLoader();
-    try {
-        const expiryDate = new Date();
-        if (plan === 'monthly') expiryDate.setMonth(expiryDate.getMonth() + 1);
-        else if (plan === 'quarterly') expiryDate.setMonth(expiryDate.getMonth() + 3);
-        else if (plan === 'biannual') expiryDate.setMonth(expiryDate.getMonth() + 6);
-        else expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-        
-        await db.collection('users').doc(APP.userProfile.uid).update({
-            walletBalance: firebase.firestore.FieldValue.increment(-price),
-            storePlan: plan,
-            storeExpiry: firebase.firestore.Timestamp.fromDate(expiryDate)
-        });
-        APP.userProfile.walletBalance -= price;
-        APP.userProfile.storePlan = plan;
-        APP.userProfile.storeExpiry = { seconds: Math.floor(expiryDate.getTime()/1000) };
-        hideLoader(); showToast('Store renewed! ✅','success');
-    } catch(e) { hideLoader(); showToast('Failed','error'); }
-}
-
-async function viewMyStore() {
-    const storeUrl = `https://${APP.userProfile.username}.oneshoplify.com`;
-    window.open(storeUrl, '_blank');
+    const c = hex.replace('#','');
+    const r = parseInt(c.substring(0,2),16), g = parseInt(c.substring(2,4),16), b = parseInt(c.substring(4,6),16);
+    return (r*299+g*587+b*114)/1000 > 150;
 }
 
 // Global access
+window.loadStoreMarket = loadStoreMarket;
+window.openStoreShop = openStoreShop;
+window.viewShopProduct = viewShopProduct;
 window.loadStoreOwnerDashboard = loadStoreOwnerDashboard;
-window.startStoreSetup = startStoreSetup;
-window.addTicketProduct = addTicketProduct;
-window.sponsonStoreProduct = sponsonStoreProduct;
-window.STORE_CATEGORIES = STORE_CATEGORIES;
-window.TICKET_PRESERVATIONS = TICKET_PRESERVATIONS;
 
-console.log('✅ storeowner.js fully loaded');
+console.log('✅ storeowner.js fully loaded - Store Market System Ready');
