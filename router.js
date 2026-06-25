@@ -192,6 +192,80 @@ case 'store-shop':
                 }, 500);
             }
             break;
+
+// In router.js handleScreenLoad function, add:
+
+case 'store-dashboard':
+    console.log('🏪 Loading store dashboard...');
+    if (typeof loadStoreDashboard === 'function') {
+        loadStoreDashboard();
+    } else if (typeof window.loadStoreDashboard === 'function') {
+        window.loadStoreDashboard();
+    } else {
+        // Show store creation if no store
+        const c = document.getElementById('store-dashboard-content');
+        if (c) {
+            c.innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <p style="font-size:60px;">🏪</p>
+                    <h3>Store Dashboard</h3>
+                    <p style="color:#666;">Loading...</p>
+                </div>`;
+        }
+    }
+    break;
+
+case 'store-customization':
+    console.log('🎨 Loading store customization...');
+    if (typeof loadStoreCustomization === 'function') {
+        loadStoreCustomization();
+    } else {
+        const c = document.getElementById('store-customization-content');
+        if (c) {
+            c.innerHTML = `
+                <div style="padding:20px;">
+                    <h3>🎨 Store Customization</h3>
+                    <p style="color:#666;">Loading customization options...</p>
+                </div>`;
+        }
+    }
+    break;
+
+case 'store-customers':
+    console.log('👥 Loading store customers...');
+    const sc = document.getElementById('store-customers-content');
+    if (sc) sc.innerHTML = '<p style="text-align:center;padding:40px;">Loading customers...</p>';
+    break;
+
+case 'store-marketing':
+    console.log('📢 Loading store marketing...');
+    const sm = document.getElementById('store-marketing-content');
+    if (sm) sm.innerHTML = '<p style="text-align:center;padding:40px;">Loading marketing tools...</p>';
+    break;
+
+case 'store-ads':
+    console.log('📺 Loading store ads...');
+    const sa = document.getElementById('store-ads-content');
+    if (sa) sa.innerHTML = '<p style="text-align:center;padding:40px;">Loading ads manager...</p>';
+    break;
+
+case 'store-reviews':
+    console.log('⭐ Loading store reviews...');
+    const sr = document.getElementById('store-reviews-content');
+    if (sr) sr.innerHTML = '<p style="text-align:center;padding:40px;">Loading reviews...</p>';
+    break;
+
+case 'chat':
+    console.log('💬 Loading chat...');
+    const ch = document.getElementById('chat-content');
+    if (ch) ch.innerHTML = '<p style="text-align:center;padding:40px;">Loading chat...</p>';
+    break;
+
+case 'store-lobby':
+    console.log('📢 Loading store lobby...');
+    const sl = document.getElementById('store-lobby-content');
+    if (sl) sl.innerHTML = '<p style="text-align:center;padding:40px;">Loading lobby...</p>';
+    break;
             
         case 'dropship-store':
             console.log('🏪 Loading dropship store...');
